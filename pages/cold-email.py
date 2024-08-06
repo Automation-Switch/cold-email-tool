@@ -59,6 +59,9 @@ class ColdEmailCrew:
         )
 
         result = crew.kickoff()
+        # Ensure result is a string
+        if not isinstance(result, str):
+            result = str(result)
         self.output_placeholder.markdown(result)
         return result
 
