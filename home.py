@@ -14,7 +14,7 @@ def login(email, password):
         # For demo purposes, assuming password validation here.
         if password:  # Replace this with actual password validation
             st.session_state.logged_in = True
-            st.session_state.page = "cold-email"  # Set the page to redirect
+            st.session_state.page = "Cold-email"  # Set the page to redirect
         else:
             st.warning('Invalid credentials')
     except Exception as e:
@@ -35,18 +35,25 @@ def main():
     if 'signup_successful' not in st.session_state:
         st.session_state.signup_successful = False
     if 'page' not in st.session_state:
-        st.session_state.page = 'home'
+        st.session_state.page = 'Home'
 
     # Check if the user is logged in and redirect if necessary
     if st.session_state.logged_in:
-        if st.session_state.page != "cold-email":
-            st.session_state.page = "cold-email"
+        if st.session_state.page != "Cold-email":
+            st.session_state.page = "Cold-email"
 
     # Display the appropriate page based on session state
-    if st.session_state.page == "cold-email":
+    if st.session_state.page == "Cold-email":
         if st.session_state.logged_in:
-            st.write("Welcome to the cold email page!")
-            # Add content for the cold email page here
+            st.success("Log in successful! Click on Cold-email on side-bar to start creating your mails.")
+            st.markdown("""
+            ### Welcome to the Cold Email Generator!
+            
+            You can now utilize our AI-powered tools to craft effective cold emails tailored to your industry and business needs.
+
+            - Use the sidebar to navigate and fill out the necessary details.
+            - Once you have filled in the details, click 'Generate Cold Email' to see the results.
+            """)
             st.stop()  # Stop further processing to show the cold email page content
 
     if st.session_state.signup_successful:
@@ -63,7 +70,7 @@ def main():
     selected_tab = ui.tabs(['Login', 'Sign Up'], selected_index=0)
 
     if selected_tab == 'Login':
-        with st.form(key='login_form'):
+        with st.form(key='login_form', clear_on_submit=True):
             email = st.text_input('Email')
             password = st.text_input('Password', type='password')
             submit_button = st.form_submit_button('Login')
@@ -71,7 +78,7 @@ def main():
                 login(email, password)
 
     elif selected_tab == 'Sign Up':
-        with st.form(key='signup_form'):
+        with st.form(key='signup_form', clear_on_submit=True):
             username = st.text_input('Username')
             email = st.text_input('Email')
             password = st.text_input('Password', type='password')
@@ -111,6 +118,20 @@ def main():
         </style>
         """, unsafe_allow_html=True
     )
+
+def set_query_params_via_js(page):
+    js_code = f"""
+    <script>
+    function setQueryParams() {{
+        const url = new URL(window.location);
+        url.searchParams.set('page', '{page}');
+        window.history.pushState('', '', url);
+    }}
+    setQueryParams();
+    window.location.reload();
+    </script>
+    """
+    st.components.v1.html(js_code, height=0)
 
 if __name__ == "__main__":
     main()
