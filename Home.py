@@ -64,7 +64,7 @@ def main():
     st.markdown("#### The ultimate tool for generating effective cold emails using AI.")
 
     with st.container():
-        st.image("https://via.placeholder.com/800x200.png?text=Cold+Email+Generator", use_column_width=True)
+        st.image("assets/precisionReach.png", use_column_width=True)
 
     # Use Shadcn tabs for Login/Signup choice
     selected_tab = ui.tabs(['Login', 'Sign Up'], selected_index=0)
