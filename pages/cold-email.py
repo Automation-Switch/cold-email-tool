@@ -59,9 +59,6 @@ class ColdEmailCrew:
         )
 
         result = crew.kickoff()
-        # Ensure result is a string
-        if not isinstance(result, str):
-            result = str(result)
         self.output_placeholder.markdown(result)
         return result
 
@@ -98,10 +95,23 @@ def run_email_generation(industry, sender, briefDes, offer_pdf, offer_link):
     result = email_crew.run()
     return result
 
+def set_query_params_via_js(page):
+    js_code = f"""
+    <script>
+    function setQueryParams() {{
+        const url = new URL(window.location);
+        url.searchParams.set('page', '{page}');
+        window.history.pushState('', '', url);
+    }}
+    setQueryParams();
+    </script>
+    """
+    st.components.v1.html(js_code, height=0)
+
 def main():
     if "logged_in" not in st.session_state or not st.session_state.logged_in:
         st.warning("You need to be logged in to access this page.")
-        st.experimental_set_query_params(page="home")  # Set page query parameter to redirect
+        set_query_params_via_js("home")  # Set page query parameter to redirect
         st.stop()
 
     if "show_sidebar" not in st.session_state:

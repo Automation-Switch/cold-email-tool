@@ -94,7 +94,7 @@ class ColdEmailAgents():
             allow_delegation= False,
             verbose=True,
             llm = self.llm,
-            step_callback=streamlit_callback,
+            #step_callback=streamlit_callback,
         )
     
     def cold_email_generator(self):
@@ -115,5 +115,5 @@ class ColdEmailAgents():
             allow_delegation= False,
             verbose=True,
             llm = self.llm,
-            step_callback=streamlit_callback,
+            #step_callback=streamlit_callback,
         )
