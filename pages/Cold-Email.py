@@ -168,7 +168,7 @@ def main():
         st.download_button(
             label="Download Cold Email as PDF",
             data=pdf_data,
-            file_name="cold_email.pdf",
+            file_name="Cold-Email.pdf",
             mime="application/pdf"
         )
 
