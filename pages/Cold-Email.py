@@ -164,7 +164,8 @@ def main():
         st.subheader("Here is your Cold Email", anchor=False, divider="rainbow")
         st.markdown(st.session_state.result)
 
-        pdf_data = create_pdf(st.session_state.result)
+        pdf_content = str(st.session_state.result)  # Ensure result is a string
+        pdf_data = create_pdf(pdf_content)
         st.download_button(
             label="Download Cold Email as PDF",
             data=pdf_data,
