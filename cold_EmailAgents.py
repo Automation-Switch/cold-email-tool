@@ -46,7 +46,7 @@ class ColdEmailAgents():
      self.llm = ChatGroq(
         temperature = 0,
         groq_api_key=st.secrets['GROQ_API_KEY'],
-        model_name="llama3-70b-8192",
+        model_name="llama-3.1-70b-versatile",
     )
 
     def business_analyst_agent(self):
@@ -78,7 +78,7 @@ class ColdEmailAgents():
             allow_delegation= False,
             verbose=True,
             llm = self.llm,
-            #step_callback=streamlit_callback,
+            step_callback=streamlit_callback,
         )
 
     def pain_points_analyst(self):
@@ -94,7 +94,7 @@ class ColdEmailAgents():
             allow_delegation= False,
             verbose=True,
             llm = self.llm,
-            #step_callback=streamlit_callback,
+            step_callback=streamlit_callback,
         )
     
     def cold_email_generator(self):
