@@ -1,0 +1,7 @@
+[Service]
+ExecStart=/usr/local/bin/streamlit run /home/ec2-user/cold-email-tool/Home.py
+WorkingDirectory=/home/ec2-user/cold-email-tool/
+User=ec2-user
+Group=ec2-user
+Restart=always
+Environment="STREAMLIT_SERVER_PORT=8501"
