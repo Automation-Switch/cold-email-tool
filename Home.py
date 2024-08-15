@@ -5,7 +5,7 @@ import streamlit_shadcn_ui as ui
 
 # Initialize Firebase
 if not firebase_admin._apps:
-    cred = credentials.Certificate('cold-email-generator-137f6-11c68d6eb9b6.json')
+    cred = credentials.Certificate('cold-email-generator-137f6-0709e66e9bba.json')
     firebase_admin.initialize_app(cred)
 
 def login(email, password):
