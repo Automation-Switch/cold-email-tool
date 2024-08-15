@@ -17,22 +17,24 @@ def icon(emoji: str):
     )
 
 class ColdEmailCrew:
-    def __init__(self, industry, sender, briefDes, offer_pdf, offer_link):
+    def __init__(self, industry, sender, briefDes, offer_pdf, offer_link, model_name):
         self.industry = industry
         self.sender = sender
         self.briefDes = briefDes
         self.offer_pdf = offer_pdf
         self.offer_link = offer_link
+        self.model_name = model_name
         self.output_placeholder = st.empty()
 
     def run(self):
-        agents = ColdEmailAgents()
+        agents = ColdEmailAgents(self.model_name)  # Pass model_name to ColdEmailAgents
         tasks = coldEmailTasks()
 
         business_analyst_agent = agents.business_analyst_agent()
         business_portfolio_analyst_agent = agents.business_portfolio_analyst()
         pain_points_analyst_agent = agents.pain_points_analyst()
         cold_email_generator_agent = agents.cold_email_generator()
+        cold_email_reviewer_agent = agents.cold_email_reviewer_agent()  # New agent for reviewing emails
 
         subniche = tasks.subniche(
             business_analyst_agent, self.briefDes, self.industry, self.sender, self.offer_link, self.offer_pdf
@@ -50,11 +52,16 @@ class ColdEmailCrew:
             cold_email_generator_agent, self.briefDes, self.industry, self.offer_link, self.offer_pdf, self.sender
         )
 
+        coldEmailReviewer = tasks.coldEmailReviewer(
+            cold_email_reviewer_agent, self.briefDes, self.industry, self.offer_link, self.offer_pdf, self.sender
+        )
+
         crew = Crew(
             agents=[
-                business_analyst_agent, business_portfolio_analyst_agent, pain_points_analyst_agent, cold_email_generator_agent
+                business_analyst_agent, business_portfolio_analyst_agent, pain_points_analyst_agent, 
+                cold_email_generator_agent, cold_email_reviewer_agent  # Include the reviewer agent
             ],
-            tasks=[subniche, profile, painPoints, coldEmailWriter],
+            tasks=[subniche, profile, painPoints, coldEmailWriter, coldEmailReviewer],  # Include the reviewer task
             verbose=True
         )
 
@@ -90,8 +97,8 @@ def create_pdf(content):
 
     return buffer
 
-def run_email_generation(industry, sender, briefDes, offer_pdf, offer_link):
-    email_crew = ColdEmailCrew(industry, sender, briefDes, offer_pdf, offer_link)
+def run_email_generation(industry, sender, briefDes, offer_pdf, offer_link, model_name):
+    email_crew = ColdEmailCrew(industry, sender, briefDes, offer_pdf, offer_link, model_name)
     result = email_crew.run()
     return result
 
@@ -142,6 +149,9 @@ def main():
                 briefDes = st.text_area("Provide a brief description about the services you offer")
                 offer_pdf = st.file_uploader("Upload a PDF file of the services you offer", type="pdf", key="pdf_uploader", help="Optional: Upload a PDF file for your services")
                 offer_link = st.text_input("Provide a link to website", help="Optional: Provide a link to your services")
+                
+                # Add a dropdown for selecting the language model
+                model_name = st.selectbox("Select the language model:", ["llama-3.1-8b-instant", "llama3-8b-8192", "mixtral-8x7b-32768"])
 
                 submitted = st.form_submit_button("Generate Cold Email")
 
@@ -151,12 +161,13 @@ def main():
                     st.session_state.briefDes = briefDes
                     st.session_state.offer_pdf = offer_pdf
                     st.session_state.offer_link = offer_link
+                    st.session_state.model_name = model_name  # Store selected model name in session state
                     st.session_state.generate = True
 
     if st.session_state.generate:
         with st.spinner("Agents at work..."):
             st.session_state.result = run_email_generation(
-                st.session_state.industry, st.session_state.sender, st.session_state.briefDes, st.session_state.offer_pdf, st.session_state.offer_link
+                st.session_state.industry, st.session_state.sender, st.session_state.briefDes, st.session_state.offer_pdf, st.session_state.offer_link, st.session_state.model_name
             )
         st.session_state.generate = False
 
