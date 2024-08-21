@@ -1,1 +1,1 @@
-I apologize, but without the necessary details about the industry and the sender's services, I am unable to provide a precise response that meets the expected criteria. Please provide me with the missing information, and I will be happy to assist you further with your request.
+Agent stopped due to iteration limit or time limit.
