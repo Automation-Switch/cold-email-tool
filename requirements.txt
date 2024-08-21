@@ -11,3 +11,7 @@ streamlit-shadcn-ui
 firebase-admin
 langchain
 langchain_groq
+streamlit-extras
+streamlit-cookies-manager
+streamlit-custom-notification-box
+cohere

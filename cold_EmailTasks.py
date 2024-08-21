@@ -13,6 +13,7 @@ class coldEmailTasks:
             {self.__tip_section()}
           """),
             expected_output="A comprehensive detail of the pain points of Job Titles and their companies should be provided by the Business Portfolio Analyst.",
+            output_file = "Companies.md",
             agent=agent)
 
     def profile(self, agent, industry, sender, briefDes, offer_pdf, offer_link):
@@ -27,6 +28,7 @@ class coldEmailTasks:
             {self.__tip_section()}
           """),
             expected_output="A comprehensive detail of the Job Titles' supervisors of the subniches that will benefit from {offer_pdf}, {briefDes}, or {offer_link}",
+            output_file = "Job Titles.md",
             agent=agent)
 
     def painPoints(self, agent, industry, sender, briefDes, offer_pdf, offer_link):
@@ -42,6 +44,7 @@ class coldEmailTasks:
               {self.__tip_section()}
           """),
             expected_output="A comprehensive detail of the pain points of Job Titles provided by the Business Portfolio Analyst.",
+            output_file = "Pain Points.md",
             agent=agent)
     
     def coldEmailWriter(self, agent, industry, sender, briefDes ,offer_pdf, offer_link):
@@ -66,7 +69,8 @@ class coldEmailTasks:
               The final output should include feedback on the email format adherence and any necessary corrections.
               {self.__tip_section()}
           """),
-            expected_output="A detailed review of five cold emails, with feedback on adherence to the format 'Title: Painpoint: Job title: email:'.",
+            expected_output="Five cold emails, that adhere to the format 'Title: Painpoint: Job title: email:'.",
+            output_file = "Cold Emails.md",
             agent=agent)
 
     def __tip_section(self):

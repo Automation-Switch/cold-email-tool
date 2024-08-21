@@ -1,7 +1,8 @@
 from crewai import Agent
 import streamlit as st
-from langchain_groq import ChatGroq
+from langchain_community.chat_models import ChatCohere
 from tools.search_tools import SearchTools
+import os
 
 def streamlit_callback(step_output):
     st.markdown("---")
@@ -37,12 +38,8 @@ def streamlit_callback(step_output):
 
 class ColdEmailAgents:
 
-    def __init__(self, model_name):
-        self.llm = ChatGroq(
-            temperature=0,
-            groq_api_key=st.secrets['GROQ_API_KEY'],
-            model_name=model_name,
-        )
+    def __init__(self):
+        self.cohere_chat_model = ChatCohere(cohere_api_key = "NVLfpgG2fxuuysnVUtqKesF8yzMoeF0sexo3RML7")
 
     def business_analyst_agent(self):
         return Agent(
@@ -57,7 +54,7 @@ class ColdEmailAgents:
             ],
             allow_delegation=False,
             verbose=True,
-            llm=self.llm,
+            llm= self.cohere_chat_model,
             ##step_callback=streamlit_callback,
         )
 
@@ -72,7 +69,7 @@ class ColdEmailAgents:
     
             allow_delegation=False,
             verbose=True,
-            llm=self.llm,
+            llm= self.cohere_chat_model,
             ##step_callback=streamlit_callback,
         )
 
@@ -87,7 +84,7 @@ class ColdEmailAgents:
         
             allow_delegation=False,
             verbose=True,
-            llm=self.llm,
+            llm= self.cohere_chat_model,
             ##step_callback=streamlit_callback,
         )
     
@@ -108,7 +105,7 @@ class ColdEmailAgents:
             
             allow_delegation=False,
             verbose=True,
-            llm=self.llm,
+            llm= self.cohere_chat_model,
             ##step_callback=streamlit_callback,
         )
 
@@ -120,6 +117,6 @@ class ColdEmailAgents:
                     Your job is to ensure that the generated cold emails are properly formatted and meet this requirement for a total of five emails.""",
             allow_delegation=False,
             verbose=True,
-            llm=self.llm,
+            llm= self.cohere_chat_model,
             ##step_callback=streamlit_callback,
         )

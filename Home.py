@@ -1,90 +1,107 @@
+import sqlite3
 import streamlit as st
-import firebase_admin
-from firebase_admin import credentials, auth
+from hashlib import sha256
 import streamlit_shadcn_ui as ui
+from streamlit_extras.switch_page_button import switch_page
+from streamlit_custom_notification_box import custom_notification_box
 
-# Initialize Firebase
-if not firebase_admin._apps:
-    cred = credentials.Certificate('cold-email-generator-137f6-0709e66e9bba.json')
-    firebase_admin.initialize_app(cred)
 
+# Database connection function
+def get_db_connection():
+    conn = sqlite3.connect('users.db')
+    return conn
+
+# Function to authenticate user
+def authenticate_user(email, password):
+    conn = get_db_connection()
+    c = conn.cursor()
+    password_hash = sha256(password.encode()).hexdigest()
+    c.execute('SELECT id FROM users WHERE email = ? AND password_hash = ?', (email, password_hash))
+    result = c.fetchone()
+    conn.close()
+    return result[0] if result else None
+
+# Function to handle login
 def login(email, password):
-    try:
-        user = auth.get_user_by_email(email)
-        # For demo purposes, assuming password validation here.
-        if password:  # Replace this with actual password validation
-            st.session_state.logged_in = True
-            st.session_state.page = "Cold-email"  # Set the page to redirect
-        else:
-            st.warning('Invalid credentials')
-    except Exception as e:
-        st.warning(f'Login Failed: {e}')
+    user_id = authenticate_user(email, password)
+    if user_id:
+        st.session_state["logged_in"] = True
+        st.session_state["email"] = email
+        st.session_state["show_alert"] = True
+        st.session_state["alert_message"] = "Logged in successfully!"
+    else:
+        st.session_state["show_alert"] = True
+        st.session_state["alert_message"] = "Login failed"
 
+# Function to handle signup
 def signup(username, email, password):
+    conn = get_db_connection()
+    c = conn.cursor()
+    password_hash = sha256(password.encode()).hexdigest()
     try:
-        auth.create_user(email=email, password=password, display_name=username)
-        st.session_state.signup_successful = True
-        st.session_state.page = "login"  # Set the page to show login form
-    except Exception as e:
-        st.error(f"Error creating account: {e}")
+        c.execute('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)', 
+                  (username, email, password_hash))
+        conn.commit()
+        st.session_state["show_alert"] = True
+        st.session_state["alert_message"] = "Account created successfully!"
+        login(email, password)  # Automatically log in the user after signup
+    except sqlite3.IntegrityError:
+        st.session_state["show_alert"] = True
+        st.session_state["alert_message"] = "Email or Username already exists!"
+    conn.close()
 
+# Streamlit app layout
 def main():
-    # Initialize session state variables if not already present
-    if 'logged_in' not in st.session_state:
-        st.session_state.logged_in = False
-    if 'signup_successful' not in st.session_state:
-        st.session_state.signup_successful = False
-    if 'page' not in st.session_state:
-        st.session_state.page = 'Home'
-
-    # Check if the user is logged in and redirect if necessary
-    if st.session_state.logged_in:
-        if st.session_state.page != "Cold-email":
-            st.session_state.page = "Cold-email"
-
-    # Display the appropriate page based on session state
-    if st.session_state.page == "Cold-email":
-        if st.session_state.logged_in:
-            st.success("Log in successful! Click on Cold-email on side-bar to start creating your mails.")
-            st.markdown("""
-            ### Welcome to the Cold Email Generator!
-            
-            You can now utilize our AI-powered tools to craft effective cold emails tailored to your industry and business needs.
-
-            - Use the sidebar to navigate and fill out the necessary details.
-            - Once you have filled in the details, click 'Generate Cold Email' to see the results.
-            """)
-            st.stop()  # Stop further processing to show the cold email page content
-
-    if st.session_state.signup_successful:
-        st.session_state.signup_successful = False
-        st.info("Sign up successful! Please log in to access precisionReach.")
-
     st.title("Welcome to :blue[precisionReach]")
     st.markdown("#### The ultimate tool for generating effective cold emails using AI.")
+    st.image("assets/precisionReach.png", use_column_width=True)
 
-    with st.container():
-        st.image("assets/precisionReach.png", use_column_width=True)
+    # Initialize session state variables
+    if "show_alert" not in st.session_state:
+        st.session_state["show_alert"] = False
+    if "alert_message" not in st.session_state:
+        st.session_state["alert_message"] = ""
+    if "logged_in" not in st.session_state:
+        st.session_state["logged_in"] = False
 
-    # Use Shadcn tabs for Login/Signup choice
+    # Shadcn tabs for Login/Signup choice
     selected_tab = ui.tabs(['Login', 'Sign Up'], selected_index=0)
 
     if selected_tab == 'Login':
-        with st.form(key='login_form', clear_on_submit=True):
+        with st.form(key='login_form', clear_on_submit=False):
             email = st.text_input('Email')
             password = st.text_input('Password', type='password')
-            submit_button = st.form_submit_button('Login')
-            if submit_button:
-                login(email, password)
+            if st.form_submit_button('Login'):
+                if login(email,password):
+                  switch_page('Cold-email')
 
     elif selected_tab == 'Sign Up':
-        with st.form(key='signup_form', clear_on_submit=True):
+        with st.form(key='signup_form', clear_on_submit=False):
             username = st.text_input('Username')
             email = st.text_input('Email')
             password = st.text_input('Password', type='password')
-            submit_button = st.form_submit_button('Sign Up')
-            if submit_button:
-                signup(username, email, password)
+            if st.form_submit_button('Sign Up'):
+                if signup(username, email, password):
+                    switch_page('Cold-email')
+
+    # Show alert dialog if needed
+
+   
+    if st.session_state.get("show_alert", False):
+      styles = {'material-icons':{'color': 'red'},
+          'text-icon-link-close-container': {'box-shadow': '#3896de 0px 4px'},
+          'notification-text': {'':''},
+          'close-button':{'':''},
+          'link':{'':''}}
+      custom_notification_box(
+        icon='info',
+        textDisplay='We are almost done with your registration...',
+        externalLink='more info',
+        url=switch_page('Cold-email'),
+        styles=styles,
+        key="foo"
+    )
+    st.session_state["show_alert"] = False  # Reset so the dialog doesn't show again
 
     # Additional CSS for styling
     st.markdown(
@@ -118,20 +135,6 @@ def main():
         </style>
         """, unsafe_allow_html=True
     )
-
-def set_query_params_via_js(page):
-    js_code = f"""
-    <script>
-    function setQueryParams() {{
-        const url = new URL(window.location);
-        url.searchParams.set('page', '{page}');
-        window.history.pushState('', '', url);
-    }}
-    setQueryParams();
-    window.location.reload();
-    </script>
-    """
-    st.components.v1.html(js_code, height=0)
 
 if __name__ == "__main__":
     main()

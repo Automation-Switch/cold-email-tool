@@ -1,0 +1,1 @@
+Once I receive the necessary industry and sender information, I will proceed with the task and deliver a comprehensive response.
