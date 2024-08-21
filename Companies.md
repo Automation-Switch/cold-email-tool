@@ -1,1 +1,1 @@
-Once I receive the necessary industry and sender information, I will proceed with the task and deliver a comprehensive response.
+I apologize, but without the necessary details about the industry and the sender's services, I am unable to provide a precise response that meets the expected criteria. Please provide me with the missing information, and I will be happy to assist you further with your request.

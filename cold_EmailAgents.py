@@ -55,7 +55,7 @@ class ColdEmailAgents:
             allow_delegation=False,
             verbose=True,
             llm= self.cohere_chat_model,
-            ##step_callback=streamlit_callback,
+            step_callback=streamlit_callback,
         )
 
     def business_portfolio_analyst(self):
@@ -70,7 +70,7 @@ class ColdEmailAgents:
             allow_delegation=False,
             verbose=True,
             llm= self.cohere_chat_model,
-            ##step_callback=streamlit_callback,
+            step_callback=streamlit_callback,
         )
 
     def pain_points_analyst(self):
@@ -85,7 +85,7 @@ class ColdEmailAgents:
             allow_delegation=False,
             verbose=True,
             llm= self.cohere_chat_model,
-            ##step_callback=streamlit_callback,
+            step_callback=streamlit_callback,
         )
     
     def cold_email_generator(self):
@@ -106,7 +106,7 @@ class ColdEmailAgents:
             allow_delegation=False,
             verbose=True,
             llm= self.cohere_chat_model,
-            ##step_callback=streamlit_callback,
+            step_callback=streamlit_callback,
         )
 
     def cold_email_reviewer_agent(self):
@@ -118,5 +118,5 @@ class ColdEmailAgents:
             allow_delegation=False,
             verbose=True,
             llm= self.cohere_chat_model,
-            ##step_callback=streamlit_callback,
+            step_callback=streamlit_callback,
         )
