@@ -105,7 +105,7 @@ class ColdEmailCrew:
 
         # Read and return the contents of the generated files
         results = {
-            "Companies": self._read_file(tasks.subniche_output_file),
+            #"Companies": self._read_file(tasks.subniche_output_file),
             "Job Titles": self._read_file(tasks.profile_output_file),
             "Pain Points": self._read_file(tasks.painPoints_output_file),
             "Cold Emails": self._read_file(tasks.coldEmailReviewer_output_file),
