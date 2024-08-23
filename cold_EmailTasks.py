@@ -2,6 +2,12 @@ from crewai import Task
 from textwrap import dedent
 
 class coldEmailTasks:
+    def __init__(self):
+        # Define output file variables for each task
+        self.subniche_output_file = "Companies.md"
+        self.profile_output_file = "Job Titles.md"
+        self.painPoints_output_file = "Pain Points.md"
+        self.coldEmailReviewer_output_file = "Cold Emails.md"
 
     def subniche(self, agent, industry, sender, briefDes, offer_pdf, offer_link):
         return Task(description=dedent(f""" 
@@ -13,7 +19,7 @@ class coldEmailTasks:
             {self.__tip_section()}
           """),
             expected_output="A comprehensive detail of the pain points of Job Titles and their companies should be provided by the Business Portfolio Analyst.",
-            #output_file = "Companies.md",
+            output_file=self.subniche_output_file,
             agent=agent)
 
     def profile(self, agent, industry, sender, briefDes, offer_pdf, offer_link):
@@ -28,7 +34,7 @@ class coldEmailTasks:
             {self.__tip_section()}
           """),
             expected_output="A comprehensive detail of the Job Titles' supervisors of the subniches that will benefit from {offer_pdf}, {briefDes}, or {offer_link}",
-            output_file = "Job Titles.md",
+            output_file=self.profile_output_file,
             agent=agent)
 
     def painPoints(self, agent, industry, sender, briefDes, offer_pdf, offer_link):
@@ -44,7 +50,7 @@ class coldEmailTasks:
               {self.__tip_section()}
           """),
             expected_output="A comprehensive detail of the pain points of Job Titles provided by the Business Portfolio Analyst.",
-            output_file = "Pain Points.md",
+            output_file=self.painPoints_output_file,
             agent=agent)
     
     def coldEmailWriter(self, agent, industry, sender, briefDes ,offer_pdf, offer_link):
@@ -70,7 +76,7 @@ class coldEmailTasks:
               {self.__tip_section()}
           """),
             expected_output="Five cold emails, that adhere to the format 'Title: Painpoint: Job title: email:'.",
-            output_file = "Cold Emails.md",
+            output_file=self.coldEmailReviewer_output_file,
             agent=agent)
 
     def __tip_section(self):
