@@ -1,8 +1,19 @@
-from crewai import Agent
-import streamlit as st
-from langchain_community.chat_models import ChatCohere
-from tools.search_tools import SearchTools
 import os
+from crewai import Agent
+from langchain_community.chat_models import ChatCohere
+from langchain_openai import OpenAI
+from langchain_groq import ChatGroq
+from tools.search_tools import SearchTools
+from dotenv import load_dotenv
+import streamlit as st
+
+# Load environment variables
+load_dotenv()
+openai_api_key = os.environ.get("OPENAI_API_KEY")
+cohere_api_key = os.environ.get("COHERE_API_KEY")  
+groq_api_key = os.environ.get("GROQ_API_KEY")
+
+# Cold Email Agents Class
 
 def streamlit_callback(step_output):
     st.markdown("---")
@@ -37,9 +48,22 @@ def streamlit_callback(step_output):
             st.markdown(step)
 
 class ColdEmailAgents:
-
-    def __init__(self):
-        self.cohere_chat_model = ChatCohere(cohere_api_key = "NVLfpgG2fxuuysnVUtqKesF8yzMoeF0sexo3RML7")
+    def __init__(self, llm_name):
+        # Initialize available LLMs
+        self.llm_dict = {
+            "cohere": ChatCohere(cohere_api_key="WmDvMVZKTaO2N33JRmEIC9WtBiRG7kDsu5ZiyUJU"),
+            "openai": OpenAI(api_key=openai_api_key),
+            "groq": ChatGroq(
+                temperature=0,
+                groq_api_key=groq_api_key,
+                model_name="mixtral-8x7b-32768"
+            )
+        }
+        # Set the selected LLM
+        if llm_name in self.llm_dict:
+            self.llm = self.llm_dict[llm_name]
+        else:
+            raise ValueError(f"LLM '{llm_name}' not recognized. Choose from {', '.join(self.llm_dict.keys())}.")
 
     def business_analyst_agent(self):
         return Agent(
@@ -54,8 +78,8 @@ class ColdEmailAgents:
             ],
             allow_delegation=False,
             verbose=True,
-            llm= self.cohere_chat_model,
-            step_callback=streamlit_callback,
+            llm=self.llm,  # Use the selected LLM here
+            step_callback=streamlit_callback
         )
 
     def business_portfolio_analyst(self):
@@ -66,11 +90,10 @@ class ColdEmailAgents:
             backstory="""You are a Business Portfolio Analyst that identifies relevant companies and job titles within {industry}
                     that would benefit from {offer_link}, {briefDes}, or {offer_pdf}. You analyze information from the Business Analyst and based on its output, make this decision.
                     Your mission is to enhance cold campaigns by targeting Job Titles and the supervisors of these Job titles who are the final decision-makers.""",
-    
             allow_delegation=False,
             verbose=True,
-            llm= self.cohere_chat_model,
-            step_callback=streamlit_callback,
+            llm=self.llm,  
+            step_callback=streamlit_callback
         )
 
     def pain_points_analyst(self):
@@ -81,13 +104,12 @@ class ColdEmailAgents:
             backstory="""You are a Business Pain Points Analyst who identifies the key pain points of job titles provided by the Business Portfolio Analyst,
                     ranking the key pain points in order of the intensity of their impact on revenue.
                     You also filter the pain points and identify the solutions that were used to address them in the past. You base your ranking on reviews and sentiments from the targeted Job Titles of various companies within {industry}.""",
-        
             allow_delegation=False,
             verbose=True,
-            llm= self.cohere_chat_model,
+            llm=self.llm,  # Use the selected LLM here
             step_callback=streamlit_callback,
         )
-    
+
     def cold_email_generator(self):
         return Agent(
             role='Cold Email Generator',
@@ -102,11 +124,10 @@ class ColdEmailAgents:
                     Industry:
                     Modern Solution:
                     Cold Email:""",
-            
             allow_delegation=False,
             verbose=True,
-            llm= self.cohere_chat_model,
-            step_callback=streamlit_callback,
+            llm=self.llm,  # Use the selected LLM here
+            step_callback=streamlit_callback
         )
 
     def cold_email_reviewer_agent(self):
@@ -117,6 +138,6 @@ class ColdEmailAgents:
                     Your job is to ensure that the generated cold emails are properly formatted and meet this requirement for a total of five emails.""",
             allow_delegation=False,
             verbose=True,
-            llm= self.cohere_chat_model,
-            step_callback=streamlit_callback,
+            llm=self.llm,  # Use the selected LLM here
+            step_callback=streamlit_callback
         )

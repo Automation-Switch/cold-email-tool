@@ -17,16 +17,18 @@ def icon(emoji: str):
     )
 
 class ColdEmailCrew:
-    def __init__(self, industry, sender, briefDes, offer_pdf, offer_link):
+    def __init__(self, industry, sender, briefDes, offer_pdf, offer_link, llm_name):
         self.industry = industry
         self.sender = sender
         self.briefDes = briefDes
         self.offer_pdf = offer_pdf
         self.offer_link = offer_link
+        self.llm_name = llm_name
         self.output_placeholder = st.empty()
 
     def run(self):
-        agents = ColdEmailAgents()  
+        # Pass the selected LLM to ColdEmailAgents
+        agents = ColdEmailAgents(llm_name=self.llm_name)  
         tasks = coldEmailTasks()
 
         business_analyst_agent = agents.business_analyst_agent()
@@ -96,8 +98,8 @@ def create_pdf(content):
 
     return buffer
 
-def run_email_generation(industry, sender, briefDes, offer_pdf, offer_link):
-    email_crew = ColdEmailCrew(industry, sender, briefDes, offer_pdf, offer_link)
+def run_email_generation(industry, sender, briefDes, offer_pdf, offer_link, llm_name):
+    email_crew = ColdEmailCrew(industry, sender, briefDes, offer_pdf, offer_link, llm_name)
     result = email_crew.run()
     return result
 
@@ -148,7 +150,9 @@ def main():
                 briefDes = st.text_area("Provide a brief description about the services you offer")
                 offer_pdf = st.file_uploader("Upload a PDF file of the services you offer", type="pdf", key="pdf_uploader", help="Optional: Upload a PDF file for your services")
                 offer_link = st.text_input("Provide a link to website", help="Optional: Provide a link to your services")
-            
+
+                llm_options = ["cohere", "openai", "groq"]
+                llm_name = st.selectbox("Select an LLM", llm_options)
 
                 submitted = st.form_submit_button("Generate Cold Email")
 
@@ -158,12 +162,13 @@ def main():
                     st.session_state.briefDes = briefDes
                     st.session_state.offer_pdf = offer_pdf
                     st.session_state.offer_link = offer_link
+                    st.session_state.llm_name = llm_name
                     st.session_state.generate = True
 
     if st.session_state.generate:
         with st.spinner("Agents at work..."):
             st.session_state.result = run_email_generation(
-                st.session_state.industry, st.session_state.sender, st.session_state.briefDes, st.session_state.offer_pdf, st.session_state.offer_link
+                st.session_state.industry, st.session_state.sender, st.session_state.briefDes, st.session_state.offer_pdf, st.session_state.offer_link, st.session_state.llm_name
             )
         st.session_state.generate = False
 
