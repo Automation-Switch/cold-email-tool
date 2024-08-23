@@ -19,7 +19,7 @@ class coldEmailTasks:
             {self.__tip_section()}
           """),
             expected_output="A comprehensive detail of the pain points of Job Titles and their companies should be provided by the Business Portfolio Analyst.",
-            #output_file=self.subniche_output_file,
+            output_file=self.subniche_output_file,
             agent=agent)
 
     def profile(self, agent, industry, sender, briefDes, offer_pdf, offer_link):

@@ -51,7 +51,7 @@ class ColdEmailAgents:
     def __init__(self, llm_name):
         # Initialize available LLMs
         self.llm_dict = {
-            "cohere": ChatCohere(cohere_api_key="WmDvMVZKTaO2N33JRmEIC9WtBiRG7kDsu5ZiyUJU"),
+            "cohere": ChatCohere(cohere_api_key="9gFxdu8N2rvpvJnTV92yMB9FxRkQsOEZiLZjCBgy"),
             "openai": OpenAI(api_key=openai_api_key),
             "groq": ChatGroq(
                 temperature=0,
