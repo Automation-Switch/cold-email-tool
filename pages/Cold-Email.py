@@ -4,10 +4,7 @@ import streamlit as st
 from crewai import Crew
 from cold_EmailAgents import ColdEmailAgents
 from cold_EmailTasks import coldEmailTasks
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
+from fpdf import FPDF
 from streamlit_extras.switch_page_button import switch_page
 
 # Configure Streamlit page
@@ -32,7 +29,7 @@ class ColdEmailCrew:
 
     def run(self):
         """Execute the tasks and return the contents of the generated files."""
-        agents = ColdEmailAgents(llm_name=self.llm_name)  
+        agents = ColdEmailAgents(llm_name=self.llm_name)
         tasks = coldEmailTasks()
 
         # Initialize agents
@@ -40,7 +37,7 @@ class ColdEmailCrew:
         business_portfolio_analyst_agent = agents.business_portfolio_analyst()
         pain_points_analyst_agent = agents.pain_points_analyst()
         cold_email_generator_agent = agents.cold_email_generator()
-        cold_email_reviewer_agent = agents.cold_email_reviewer_agent()  
+        cold_email_reviewer_agent = agents.cold_email_reviewer_agent()
 
         # Create tasks with correct argument ordering
         subniche = tasks.subniche(
@@ -91,13 +88,13 @@ class ColdEmailCrew:
         # Initialize and execute the Crew
         crew = Crew(
             agents=[
-                business_analyst_agent, 
-                business_portfolio_analyst_agent, 
-                pain_points_analyst_agent, 
-                cold_email_generator_agent, 
-                cold_email_reviewer_agent  
+                business_analyst_agent,
+                business_portfolio_analyst_agent,
+                pain_points_analyst_agent,
+                cold_email_generator_agent,
+                cold_email_reviewer_agent
             ],
-            tasks=[subniche, profile, painPoints, coldEmailWriter, coldEmailReviewer],  
+            tasks=[subniche, profile, painPoints, coldEmailWriter, coldEmailReviewer],
             verbose=True
         )
 
@@ -121,41 +118,25 @@ class ColdEmailCrew:
         else:
             return f"**Error:** The file `{file_path}` was not found."
 
-def create_pdf(content):
-    """Generate a PDF from the provided content."""
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter,
-                            rightMargin=1*inch, leftMargin=1*inch,
-                            topMargin=1*inch, bottomMargin=1*inch)
+def create_pdf_from_files(file_contents):
+    """Generate a well-formatted PDF from multiple files."""
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
 
-    styles = getSampleStyleSheet()
-    elements = []
+    for title, content in file_contents.items():
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(0, 10, title, 0, 1, 'C')
+        pdf.ln(10)  # Add a line break
 
-    # Add header
-    header_text = "Cold Email Report\nhttps://scaletific.com/ - team@scaletific.com"
-    header = Paragraph(header_text, styles['Title'])
-    elements.append(header)
-    elements.append(Spacer(1, 12))
+        pdf.set_font("Arial", '', 12)
+        pdf.multi_cell(0, 10, content)
 
-    # Add body content
-    for section_title, section_content in content.items():
-        section_header = Paragraph(section_title, styles['Heading2'])
-        elements.append(section_header)
-        elements.append(Spacer(1, 12))
-        section_body = Paragraph(section_content, styles['BodyText'])
-        elements.append(section_body)
-        elements.append(Spacer(1, 24))
+    pdf_output = io.BytesIO()
+    pdf.output(pdf_output)
+    pdf_output.seek(0)
 
-    # Add footer
-    footer_text = "Page 1"
-    footer = Paragraph(footer_text, styles['Normal'])
-    elements.append(Spacer(1, 12))
-    elements.append(footer)
-
-    doc.build(elements)
-    buffer.seek(0)
-
-    return buffer
+    return pdf_output
 
 def run_email_generation(industry, sender, briefDes, offer_pdf, offer_link, llm_name):
     """Instantiate and run the ColdEmailCrew, then return the results."""
@@ -195,6 +176,8 @@ def main():
         st.session_state.results = {}
     if "generate" not in st.session_state:
         st.session_state.generate = False
+    if "pdf_data" not in st.session_state:
+        st.session_state.pdf_data = None
 
     def toggle_sidebar():
         """Toggle the visibility of the sidebar."""
@@ -220,7 +203,7 @@ def main():
                 # Industry selection
                 dropdown_Options = ["Service Providers", "Manufacturing", "Agricultural", "Other"]
                 industry = st.selectbox(
-                    "Which industry perfectly describes the companies you are sending the cold email to?", 
+                    "Which industry perfectly describes the companies you are sending the cold email to?",
                     dropdown_Options
                 )
                 industry_other = st.text_input("If 'Other' please specify", help="Optional")
@@ -229,9 +212,9 @@ def main():
                 sender = st.text_input("What is the name of your Company?", placeholder="Scaletific")
                 briefDes = st.text_area("Provide a brief description about the services you offer")
                 offer_pdf = st.file_uploader(
-                    "Upload a PDF file of the services you offer", 
-                    type="pdf", 
-                    key="pdf_uploader", 
+                    "Upload a PDF file of the services you offer",
+                    type="pdf",
+                    key="pdf_uploader",
                     help="Optional: Upload a PDF file for your services"
                 )
                 offer_link = st.text_input("Provide a link to your website", help="Optional: Provide a link to your services")
@@ -252,40 +235,39 @@ def main():
                     st.session_state.offer_link = offer_link
                     st.session_state.llm_name = llm_name
                     st.session_state.generate = True
+                    st.session_state.results = {}  # Reset results
+                    st.session_state.pdf_data = None  # Reset PDF data
 
-    # Execute email generation when triggered
     if st.session_state.generate:
         with st.spinner("Agents at work..."):
-            st.session_state.results = run_email_generation(
-                st.session_state.industry, 
-                st.session_state.sender, 
-                st.session_state.briefDes, 
-                st.session_state.offer_pdf, 
-                st.session_state.offer_link, 
-                st.session_state.llm_name
+            # Run email generation and display results if not already generated
+            if not st.session_state.results:
+                results = run_email_generation(
+                    st.session_state.industry,
+                    st.session_state.sender,
+                    st.session_state.briefDes,
+                    st.session_state.offer_pdf,
+                    st.session_state.offer_link,
+                    st.session_state.llm_name
+                )
+                st.session_state.results = results
+
+            # Check if PDF data is already generated
+            if st.session_state.pdf_data is None:
+                st.session_state.pdf_data = create_pdf_from_files(st.session_state.results)
+
+            # Display results
+            st.subheader("Generated Files:")
+            for title, content in st.session_state.results.items():
+                st.markdown(f"**{title}:**\n{content}")
+
+            # Download button for PDF
+            st.download_button(
+                label="Download PDF",
+                data=st.session_state.pdf_data,
+                file_name="Generated_Report.pdf",
+                mime="application/pdf"
             )
-        st.session_state.generate = False
-
-    # Display results and provide PDF download
-    if st.session_state.results:
-        for title, content in st.session_state.results.items():
-            st.subheader(title)
-            st.markdown(content)
-
-        # Prepare content for PDF
-        pdf_content = st.session_state.results
-        pdf_data = create_pdf(pdf_content)
-
-        # Download button for PDF
-        st.download_button(
-            label="Download Results as PDF",
-            data=pdf_data,
-            file_name="Cold-Email-Results.pdf",
-            mime="application/pdf"
-        )
-
-    # Footer
-    st.markdown("*Copyright ©2024 [Scaletific](https://www.scaletific.com). All Rights Reserved.*")
 
 if __name__ == "__main__":
     main()

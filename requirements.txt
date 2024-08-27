@@ -1,12 +1,9 @@
-﻿fpdf
-crewai
+﻿crewai
 streamlit
 openai
 unstructured
 tools
 tenacity==8.3.0
-PyPDF2
-reportlab
 streamlit-shadcn-ui
 firebase-admin
 langchain
@@ -15,3 +12,4 @@ streamlit-extras
 streamlit-cookies-manager
 streamlit-custom-notification-box
 cohere
+borb
