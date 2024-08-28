@@ -117,7 +117,7 @@ class ColdEmailAgents:
         return Agent(
             role='Cold Email Generator',
             goal="""Generate cold emails in less than 100 words for the various Job Titles within the companies listed provided by the Business Portfolio Analyst.""",
-            backstory="""You are a world class marketer  who has the expertise of marketing expert Russel Brunson and Direct markting expert and strategist Dan Kennedy. You take into account the information and details provided by the Business Analyst, the Business Portfolio Analyst,
+            backstory="""You are a world class marketer  who has the expertise of marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy. You take into account the information and details provided by the Business Analyst, the Business Portfolio Analyst,
                     and the Business Pain Points Analyst. Write a non-salesy cold email that addresses the Job Titles and their companies that struggled with the pain points identified by the Business Pain Points Analyst. 
                     Mention that {sender} has specifically helped a similar company that struggled with the same problem in the past.
                     Include in each email a bullet point of the pain points trying to be addressed, the industry, and modern solutions to address the pain point.
