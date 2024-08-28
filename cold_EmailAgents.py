@@ -89,7 +89,7 @@ class ColdEmailAgents:
             and the supervisor in charge of the Job Titles.""",
             backstory="""You are a Business Portfolio Analyst that identifies relevant companies and job titles within {industry}
                     that would benefit from {offer_link}, {briefDes}, or {offer_pdf}. You analyze information from the Business Analyst and based on its output, make this decision.
-                    Your mission is to enhance cold campaigns by targeting Job Titles and the supervisors of these Job titles who are the final decision-makers.""",
+                    Your mission is to enhance cold email campaigns by targeting Job Titles and the key decision makers of these Job titles who are the final decision-makers.""",
             allow_delegation=False,
             verbose=True,
             llm=self.llm,  
@@ -102,7 +102,10 @@ class ColdEmailAgents:
             goal="""Identify pain points of Job Titles within each company provided by the Business Portfolio Analyst, 
             ranking them by their contribution to loss of revenue.""",
             backstory="""You are a Business Pain Points Analyst who identifies the key pain points of job titles provided by the Business Portfolio Analyst,
-                    ranking the key pain points in order of the intensity of their impact on revenue.
+                    You Rank the key pain points in order of the intensity of their impact on revenue. As part of your final submission you always submit a three column table. 
+                    The heading for the first column is named Job title, and the cells column are  all the Job titles you are identified. The heading for the second 
+                    column  is named Ranked pain points and  cells in this column are the pain points you identifed. The heading for the third column is named 
+                    Impact On Revenue, and the cells in this column has the ranking for the respective  job title and ranked pain points.
                     You also filter the pain points and identify the solutions that were used to address them in the past. You base your ranking on reviews and sentiments from the targeted Job Titles of various companies within {industry}.""",
             allow_delegation=False,
             verbose=True,
@@ -114,7 +117,7 @@ class ColdEmailAgents:
         return Agent(
             role='Cold Email Generator',
             goal="""Generate cold emails in less than 100 words for the various Job Titles within the companies listed provided by the Business Portfolio Analyst.""",
-            backstory="""You are a cold email writer who takes into account the information and details provided by the Business Analyst, the Business Portfolio Analyst,
+            backstory="""You are a world class marketer  who has the expertise of marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy. You take into account the information and details provided by the Business Analyst, the Business Portfolio Analyst,
                     and the Business Pain Points Analyst. Write a non-salesy cold email that addresses the Job Titles and their companies that struggled with the pain points identified by the Business Pain Points Analyst. 
                     Mention that {sender} has specifically helped a similar company that struggled with the same problem in the past.
                     Include in each email a bullet point of the pain points trying to be addressed, the industry, and modern solutions to address the pain point.
@@ -134,7 +137,7 @@ class ColdEmailAgents:
         return Agent(
             role='Cold Email Reviewer',
             goal="""Review the generated cold emails to ensure they follow the format: 'Title: Painpoint: Job title: email:' for a total of five emails.""",
-            backstory="""You are responsible for reviewing cold emails to ensure they adhere to a specific format. This format is 'Title: Painpoint: Job title: email:'. 
+            backstory="""You are sales and marketing expert and you niche are of expertise is cold sales emails. You posess world class ability in identifying cold email copy that converts. You have the are responsible for reviewing cold emails to ensure they adhere to a specific format. This format is 'Title: Painpoint: Job title: email:'. 
                     Your job is to ensure that the generated cold emails are properly formatted and meet this requirement for a total of five emails.""",
             allow_delegation=False,
             verbose=True,
