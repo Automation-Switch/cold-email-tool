@@ -4,7 +4,8 @@ import streamlit as st
 from crewai import Crew
 from cold_EmailAgents import ColdEmailAgents
 from cold_EmailTasks import coldEmailTasks
-from fpdf import FPDF
+from borb.pdf import Document, Page, SingleColumnLayout, Paragraph, PDF
+from borb.pdf.canvas.layout.page_layout.multi_column_layout import MultiColumnLayout
 from streamlit_extras.switch_page_button import switch_page
 
 # Configure Streamlit page
@@ -102,7 +103,6 @@ class ColdEmailCrew:
 
         # Read and return the contents of the generated files
         results = {
-            #"Companies": self._read_file(tasks.subniche_output_file),
             "Job Titles": self._read_file(tasks.profile_output_file),
             "Pain Points": self._read_file(tasks.painPoints_output_file),
             "Cold Emails": self._read_file(tasks.coldEmailReviewer_output_file),
@@ -119,21 +119,18 @@ class ColdEmailCrew:
             return f"**Error:** The file `{file_path}` was not found."
 
 def create_pdf_from_files(file_contents):
-    """Generate a well-formatted PDF from multiple files."""
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    """Generate a well-formatted PDF from multiple files using borb."""
+    pdf = Document()
+    page = Page()
+    layout = SingleColumnLayout(page)
+    pdf.add_page(page)
 
     for title, content in file_contents.items():
-        pdf.add_page()
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(0, 10, title, 0, 1, 'C')
-        pdf.ln(10)  # Add a line break
-
-        pdf.set_font("Arial", '', 12)
-        pdf.multi_cell(0, 10, content)
+        layout.add(Paragraph(f"{title}\n\n", font_size=16))
+        layout.add(Paragraph(content, font="Helvetica", font_size=12))
 
     pdf_output = io.BytesIO()
-    pdf.output(pdf_output)
+    PDF.dumps(pdf_output, pdf)
     pdf_output.seek(0)
 
     return pdf_output
@@ -252,20 +249,22 @@ def main():
                 )
                 st.session_state.results = results
 
-            # Check if PDF data is already generated
-            if st.session_state.pdf_data is None:
-                st.session_state.pdf_data = create_pdf_from_files(st.session_state.results)
+        # Display results in a collapsible format
+        for key, content in st.session_state.results.items():
+            with st.expander(key):
+                st.write(content)
 
-            # Display results
-            st.subheader("Generated Report:")
-            for title, content in st.session_state.results.items():
-                st.markdown(f"**{title}:**\n{content}")
+        # Generate PDF from results if not already done
+        if st.button("Generate PDF"):
+            pdf_data = create_pdf_from_files(st.session_state.results)
+            st.session_state.pdf_data = pdf_data
 
-            # Download button for PDF
+        # Display download button if PDF is generated
+        if st.session_state.pdf_data:
             st.download_button(
                 label="Download PDF",
                 data=st.session_state.pdf_data,
-                file_name="Generated_Report.pdf",
+                file_name="cold_emails.pdf",
                 mime="application/pdf"
             )
 
