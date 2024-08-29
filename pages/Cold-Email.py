@@ -257,7 +257,7 @@ def main():
                 st.session_state.pdf_data = create_pdf_from_files(st.session_state.results)
 
             # Display results
-            st.subheader("Generated Files:")
+            st.subheader("Generated Report:")
             for title, content in st.session_state.results.items():
                 st.markdown(f"**{title}:**\n{content}")
 
