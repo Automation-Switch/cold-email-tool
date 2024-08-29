@@ -13,3 +13,4 @@ streamlit-cookies-manager
 streamlit-custom-notification-box
 cohere
 borb
+fpdf
