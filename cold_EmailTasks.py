@@ -49,7 +49,11 @@ class coldEmailTasks:
               Be specific and explain why each pain point and solution was chosen, and what makes them significant!
               {self.__tip_section()}
           """),
-            expected_output="A comprehensive detail of the pain points of Job Titles provided by the Business Portfolio Analyst.",
+            expected_output="""A comprehensive detail of the pain points of Job Titles provided by the Business Portfolio Analyst. You Rank the key pain 
+                    points in order of the intensity of their impact on revenue. As part of your final submission you always submit a three column table. 
+                    The heading for the first column is named Job title, and the cells column are  all the Job titles you are identified. The heading for the second 
+                    column  is named Ranked pain points and  cells in this column are the pain points you identifed. The heading for the third column is named 
+                    Impact On Revenue, and the cells in this column has the ranking for the respective  job title and ranked pain points.""",
             output_file=self.painPoints_output_file,
             agent=agent)
     
@@ -63,7 +67,8 @@ class coldEmailTasks:
               the Business Portfolio Analyst, and the Business Pain Points Analyst.
               {self.__tip_section()}
           """),
-            expected_output="The final must be well-formatted Cold emails for the various Job Titles and their companies provided by Business Portfolio Analyst.",
+            expected_output="""The final must be well-formatted Cold emails for the various Job Titles and their companies provided by Business Portfolio Analyst. 
+                                You crafte your emails in the style of world class of marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy""",
             agent=agent)
 
     def coldEmailReviewer(self, agent, industry, sender, briefDes ,offer_pdf, offer_link):
