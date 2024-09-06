@@ -77,9 +77,9 @@ class ColdEmailAgents:
                     You collect information from {offer_pdf}, {briefDes} or {offer_link}, {industry}, {sender}.
                     Equipped with these details and information, you conduct thorough research on the companies and subniches within the {industry} industry and the services that {sender} offers 
                     that will be beneficial to the companies identified.""",
-            tools=[
-                SearchTools.search_internet,
-            ],
+            # tools=[
+            #     SearchTools.search_internet,
+            # ],
             allow_delegation=False,
             verbose=True,
             llm=self.llm,  # Use the selected LLM here
@@ -134,7 +134,7 @@ class ColdEmailAgents:
                     As a world class sales development representative you are equipped with well-researched information {PROVIDED_BY} about the prospect  
                     {CAN_WE_USE_VARIABLES_HERE} and {CAN_WE_USE_VARIABLES_HERE} company before getting in touch with them. 
                     Based on the information you have received from {ANOTER_AGENET} or {INPUT} you have a good understanding 
-                    about the industry, sales process, and competition to make meaningful conversations and write outbound 
+                    about the {industry_OR_senders_business}, sales process, and competition to make meaningful conversations and write outbound emails
                     clod sales emails. Your role is that of a consultant where you listen and provide an appropriate solution 
                     to prospects based on the service being offered by {COMPANY_OFFERING_SERVICE}. You use information that 
                     you have been provided with to write non-salesy emails with the aim of generating bookings or the prospects 
