@@ -25,7 +25,7 @@ class coldEmailTasks:
     def profile(self, agent, industry, sender, briefDes, offer_pdf, offer_link):
         return Task(description=dedent(f"""
               Identify and list the Job Titles within {industry} that are responsible for or will benefit from {offer_link}, {briefDes}, or {offer_pdf}. 
-              Using the information provided by the Business Portfolio Analyst, identify the Job Titles' supervisors of the subniches.
+              Using the information provided by the Business Portfolio Analyst, identify the Job Titles' of decision makers and supervisors of the subniches.
               Gather information about the relevant job titles, their responsibilities, and how they will benefit from the offer. Identify their supervisors and understand the subniches they oversee. 
               This analysis should provide a detailed overview of the organizational structure, including the key job titles, their roles, and their supervisors. 
               Focus on responsibilities, potential benefits from the offer, and the overall hierarchy within the company.
@@ -68,8 +68,43 @@ class coldEmailTasks:
               {self.__tip_section()}
           """),
             expected_output="""The final must be well-formatted Cold emails for the various Job Titles and their companies provided by Business Portfolio Analyst. 
-                                You crafte your emails in the style of world class of marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy""",
+                                You crafted your emails in the style of world class of marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy""",
             agent=agent)
+    
+
+
+    #NEW
+    def coldEmailWriter_B(self, agent, industry, sender, briefDes ,offer_pdf, offer_link):
+        return Task(description=dedent(f"""
+              Generate emails in less than 100 words for the various Job Titles provided by the Business Portfolio Analyst.
+              The purpose of email the email is to introduce our offer to the prospect. We want to come armed with the information we used to research
+              them and explain why we are reaching out and then most importantly, explain why this email is worth their time to engage. 
+              Mention that {sender} has specifically helped a similar company that struggled with the same problem in the past. 
+              Additionally, include how {sender} can address the prospects pain points with modern solutions by matching {sender} product or services with  pain points that have been identified.
+              You are a sales development represensitive who is responsible for contacting potential prospects through cold emails, Identifying prospect's needs and suggesting appropriate 
+              products/services. You present the {sender} company to potential prospects via cold outbound email while takeing into account the information and details provided by the Business Analyst, 
+              the Business Portfolio Analyst, and the Business Pain Points Analyst.
+              {self.__tip_section()}
+          """),
+            expected_output="""Outbound Cold emails for the various Job Titles and their companies provided by Business Portfolio Analyst. 
+                              The subject for the email lines that suggest or infer it's possible a colleague or a customer has sent them the email WITHOUT LYING.
+                              The subject line still needs to make sense with the overall message. Keep your subject lines under 2-3 words and think of something that a colleague or customer would send the prospect.
+                              We want to send something that sparks intrigue to open the email, not give away the entire message. 
+                              You emails should should be written from the perspective of a combination experience drawn from marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy.
+                              Write at a 5th grade level. Clearly communicate the reason you are reaching out. Stay away from spam words. Keep the email shorter than 100 words. 
+                              {{first_name}} {{Lead with the sentence explaining why we are reaching out to them and what research we have done. Answer the “why you, why now?” question.}}
+                              As part of the final email framework, ask a question that cuts through to our prospect's problems whether they know it or not to make them know about how they are solving 
+                              their current problem OR segue with that homework into how we can help.
+                              include a call to action. The Call to action should seek to answer the question “How do we make this worth this prospects time?”
+""",
+            agent=agent)
+    
+    
+
+
+    # The final could probbaly be broken into two parts, we want the tool to simpley generate the 
+    # email with using bullet points to identify  Title: Painpoint: Job title etc. The final email should suffice
+    # we can then supplement it by presenting a sepereate email witout the hilighte pain point tiltles etc
 
     def coldEmailReviewer(self, agent, industry, sender, briefDes ,offer_pdf, offer_link):
         return Task(description=dedent(f"""
@@ -86,3 +121,5 @@ class coldEmailTasks:
 
     def __tip_section(self):
         return "If you do your BEST WORK, I'll tip you $100 and grant you any wish you want!"
+    
+

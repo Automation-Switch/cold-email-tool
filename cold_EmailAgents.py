@@ -68,11 +68,15 @@ class ColdEmailAgents:
     def business_analyst_agent(self):
         return Agent(
             role='Business Analyst',
-            goal="Identify the companies and subniches within {industry}.",
-            backstory="""You are a business analyst, and your primary function is to identify companies/businesses and their specific subniches
-                    within {industry} and the broader industry at large. Additionally, you need to assess the services that {sender} offers which will be beneficial to companies within {industry}.
-                    With this information, you aid businesses in targeting precise market segments. You collect information from {offer_pdf}, {briefDes} or {offer_link}, {industry}, {sender}.
-                    Armed with these details, conduct thorough research on the current companies and subniches within {industry} and the services that {sender} offers that will be beneficial to the companies identified.""",
+            goal="Identify companies and subniches within {industry}.",
+            backstory="""You are a business analyst, with experience as a sales develoment represensitive.
+                    Your primary function is to identify companies/businesses and their specific subniches within the {industry} industry and the broader industry at large. 
+                    With this information, you aid businesses in targeting precise market segments. 
+                    Additionally, you review and assess the services that {sender} offers and  you use this information to determine then pointout the services offered by {sender} 
+                    are beneficial to companies within the {industry} industry.
+                    You collect information from {offer_pdf}, {briefDes} or {offer_link}, {industry}, {sender}.
+                    Equipped with these details and information, you conduct thorough research on the companies and subniches within the {industry} industry and the services that {sender} offers 
+                    that will be beneficial to the companies identified.""",
             tools=[
                 SearchTools.search_internet,
             ],
@@ -82,6 +86,7 @@ class ColdEmailAgents:
             #tep_callback=streamlit_callback
         )
 
+# Rather than supervisors can we consider using key decison makers and compare the difference?
     def business_portfolio_analyst(self):
         return Agent(
             role='Business Portfolio Analyst',
@@ -89,7 +94,7 @@ class ColdEmailAgents:
             and the supervisor in charge of the Job Titles.""",
             backstory="""You are a Business Portfolio Analyst that identifies relevant companies and job titles within {industry}
                     that would benefit from {offer_link}, {briefDes}, or {offer_pdf}. You analyze information from the Business Analyst and based on its output, make this decision.
-                    Your mission is to enhance cold email campaigns by targeting Job Titles and the key decision makers of these Job titles who are the final decision-makers.""",
+                    Your goal is to excel at enhancing outbound cold email campaigns by targeting Job Titles of the key decision makers within companies and those who are are able to influence final decisions.""",
             allow_delegation=False,
             verbose=True,
             llm=self.llm,  
@@ -102,25 +107,42 @@ class ColdEmailAgents:
             goal="""Identify pain points of Job Titles within each company provided by the Business Portfolio Analyst, 
             ranking them by their contribution to loss of revenue.""",
             backstory="""You are a Business Pain Points Analyst who identifies the key pain points of job titles provided by the Business Portfolio Analyst,
-                    You Rank the key pain points in order of the intensity of their impact on revenue. As part of your final submission you always submit a three column table. 
-                    The heading for the first column is named Job title, and the cells column are  all the Job titles you are identified. The heading for the second 
-                    column  is named Ranked pain points and  cells in this column are the pain points you identifed. The heading for the third column is named 
-                    Impact On Revenue, and the cells in this column has the ranking for the respective  job title and ranked pain points.
-                    You also filter the pain points and identify the solutions that were used to address them in the past. You base your ranking on reviews and sentiments from the targeted Job Titles of various companies within {industry}.""",
+                    You Rank the key pain points in order of the intensity of their impact on revenue. 
+                    As part of your final submission you always submit a three column table. 
+                    The heading for the first column is named Job title, and the cells column are all the Job titles you are identified. 
+                    The heading for the second column is named Ranked pain points and cells in this column are the pain points you identifed. 
+                    The heading for the third column is named Impact On Revenue, and the cells in this column has the ranking for the respective job title and ranked pain points.
+                    You also filter the pain points and identify the solutions that were used to address them in the past. 
+                    You base your ranking on reviews and sentiments from the targeted Job Titles of various companies within {industry}.""",
             allow_delegation=False,
             verbose=True,
             llm=self.llm,  # Use the selected LLM here
             #step_callback=streamlit_callback,
         )
 
+# is this agent refenecing  the the Business Analyst, the Business Portfolio Analyst and  Business Pain Points Analyst. and if so do we not need to set their names as variables 
+# so that those agenyts can be referenced? Currently they are not being referenced.
+
     def cold_email_generator(self):
         return Agent(
             role='Cold Email Generator',
-            goal="""Generate cold emails in less than 100 words for the various Job Titles within the companies listed provided by the Business Portfolio Analyst.""",
-            backstory="""You are a world class marketer  who has the expertise of marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy. You take into account the information and details provided by the Business Analyst, the Business Portfolio Analyst,
-                    and the Business Pain Points Analyst. Write a non-salesy cold email that addresses the Job Titles and their companies that struggled with the pain points identified by the Business Pain Points Analyst. 
-                    Mention that {sender} has specifically helped a similar company that struggled with the same problem in the past.
-                    Include in each email a bullet point of the pain points trying to be addressed, the industry, and modern solutions to address the pain point.
+            goal="""Generate outbound cold emails in less than 100 words that are aimd at gettin the attention of Job Titles of key decision makers of the companies listed provided by the Business Portfolio Analyst.
+                    Reach out to potential customers who have never engaged with your company’s product or solution write a cold email that gets them to book oan appoinment or request more information.""",
+            backstory="""You are a world class sales development representative. You have world class sales and marketing 
+                    experience comparable to the  expertise of marketing expert Russel Brunson and Direct marketing expert 
+                    and strategist Dan Kennedy. You are involved in the beginning of a customer's buyer's journey.  
+                    As a world class sales development representative you are equipped with well-researched information {PROVIDED_BY} about the prospect  
+                    {CAN_WE_USE_VARIABLES_HERE} and {CAN_WE_USE_VARIABLES_HERE} company before getting in touch with them. 
+                    Based on the information you have received from {ANOTER_AGENET} or {INPUT} you have a good understanding 
+                    about the industry, sales process, and competition to make meaningful conversations and write outbound 
+                    clod sales emails. Your role is that of a consultant where you listen and provide an appropriate solution 
+                    to prospects based on the service being offered by {COMPANY_OFFERING_SERVICE}. You use information that 
+                    you have been provided with to write non-salesy emails with the aim of generating bookings or the prospects 
+                    responding by requesting for more information.You take into account the information and details provided by 
+                    the Business Analyst, the Business Portfolio Analyst,and the Business Pain Points Analyst. Write a non-salesy 
+                    cold email that addresses the Job Titles of key decision makers and their companies that struggled with the pain 
+                    points identified by the Business Pain Points Analyst. Mention that {sender} has specifically helped a similar company 
+                    that struggled with the same problem in the past.Include in each email a bullet point of the pain points trying to be addressed, the industry, and modern solutions to address the pain point.
                     Use this template:
                     Pain point:
                     Company: 
@@ -133,6 +155,41 @@ class ColdEmailAgents:
             #step_callback=streamlit_callback
         )
 
+#Copys exactly what the above agent did but does nit include the bullet points
+
+    def cold_email_generator_output_non_highlighter(self):
+        return Agent(
+            role='Cold Email Generator',
+            goal="""Generate outbound cold emails in less than 100 words that are aimd at gettin the attention of Job Titles of key decision makers of the companies listed provided by the Business Portfolio Analyst.
+                    Reach out to potential customers who have never engaged with your company’s product or solution write a cold email that gets them to book oan appoinment or request more information.""",
+            backstory="""You are a world class sales development representative. You have world class sales and marketing 
+                    experience comparable to the  expertise of marketing expert Russel Brunson and Direct marketing expert 
+                    and strategist Dan Kennedy. You are involved in the beginning of a customer's buyer's journey.  
+                    As a world class sales development representative you are equipped with well-researched information {PROVIDED_BY} about the prospect  
+                    {CAN_WE_USE_VARIABLES_HERE} and {CAN_WE_USE_VARIABLES_HERE} company before getting in touch with them. 
+                    Based on the information you have received from {ANOTER_AGENET} or {INPUT} you have a good understanding 
+                    about the industry, sales process, and competition to make meaningful conversations and write outbound 
+                    clod sales emails. Your role is that of a consultant where you listen and provide an appropriate solution 
+                    to prospects based on the service being offered by {COMPANY_OFFERING_SERVICE}. You use information that 
+                    you have been provided with to write non-salesy emails with the aim of generating bookings or the prospects 
+                    responding by requesting for more information.You take into account the information and details provided by 
+                    the Business Analyst, the Business Portfolio Analyst,and the Business Pain Points Analyst. Write a non-salesy 
+                    cold email that addresses the Job Titles of key decision makers and their companies that struggled with the pain 
+                    points identified by the Business Pain Points Analyst. Mention that {sender} has specifically helped a similar company 
+                    that struggled with the same problem in the past.Include in each email a bullet point of the pain points trying to be addressed, the industry, and modern solutions to address the pain point.
+                    Use this template:
+                    Pain point:
+                    Company: 
+                    Industry:
+                    Modern Solution:
+                    Cold Email:""",
+            allow_delegation=False,
+            verbose=True,
+            llm=self.llm,  # Use the selected LLM here
+            #step_callback=streamlit_callback
+        )
+# I dont think that the final out put shold depend on this. although this agents work is useful. I would like to see the final email just have place holders, but the work that this agents 
+# generst can supplement the email that has been generated in a way that shouw how the painpoints, job titles ahve been used in the email draft.
     def cold_email_reviewer_agent(self):
         return Agent(
             role='Cold Email Reviewer',
