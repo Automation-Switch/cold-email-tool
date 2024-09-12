@@ -4,7 +4,7 @@ import streamlit as st
 from crewai import Crew
 from cold_EmailAgents import ColdEmailAgents
 from cold_EmailTasks import coldEmailTasks
-from borb.pdf import Document, Page, SingleColumnLayout, Paragraph, PDF
+from borb.pdf import Document, Page, SingleColumnLayout, SingleColumnLayoutWithOverflow, Paragraph, PDF
 from borb.pdf.canvas.layout.page_layout.multi_column_layout import MultiColumnLayout
 from streamlit_extras.switch_page_button import switch_page
 
@@ -38,7 +38,6 @@ class ColdEmailCrew:
         business_portfolio_analyst_agent = agents.business_portfolio_analyst()
         idealCustomer_profiler = agents.idealCustomer_profiler()
         cold_email_generator_agent = agents.cold_email_generator()
-        cold_email_reviewer_agent = agents.cold_email_reviewer_agent()
 
         # Create tasks with correct argument ordering
         subniche = tasks.subniche(
@@ -77,14 +76,6 @@ class ColdEmailCrew:
             offer_link=self.offer_link
         )
 
-        coldEmailReviewer = tasks.coldEmailReviewer(
-            agent=cold_email_reviewer_agent,
-            industry=self.industry,
-            sender=self.sender,
-            briefDes=self.briefDes,
-            offer_pdf=self.offer_pdf,
-            offer_link=self.offer_link
-        )
 
         # Initialize and execute the Crew
         crew = Crew(
@@ -92,10 +83,9 @@ class ColdEmailCrew:
                 business_analyst_agent,
                 business_portfolio_analyst_agent,
                 idealCustomer_profiler,
-                cold_email_generator_agent,
-                cold_email_reviewer_agent
+                cold_email_generator_agent
             ],
-            tasks=[subniche, profile, idealCustomerProfile, coldEmailWriter, coldEmailReviewer],
+            tasks=[subniche, profile, idealCustomerProfile, coldEmailWriter],
             verbose=True
         )
 
@@ -122,12 +112,12 @@ def create_pdf_from_files(file_contents):
     """Generate a well-formatted PDF from multiple files using borb."""
     pdf = Document()
     page = Page()
-    layout = SingleColumnLayout(page)
+    layout = SingleColumnLayoutWithOverflow(page)
     pdf.add_page(page)
 
     for title, content in file_contents.items():
-        layout.add(Paragraph(f"{title}\n\n", font_size=16))
-        layout.add(Paragraph(content, font="Helvetica", font_size=12))
+        layout.add(Paragraph(f"{title}\n\n", font_size=12))
+        layout.add(Paragraph(content, font="Helvetica", font_size=8))
 
     pdf_output = io.BytesIO()
     PDF.dumps(pdf_output, pdf)

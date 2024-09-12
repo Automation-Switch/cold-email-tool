@@ -122,27 +122,11 @@ class ColdEmailAgents:
             backstory="""You are a world class marketer  who has the expertise of marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy. You take into account the information and details provided by the Business Analyst, the Business Portfolio Analyst,
                     and the Business Pain Points Analyst. Write a non-salesy cold email that addresses the Job Titles and their companies that struggled with the pain points identified by the Business Pain Points Analyst. 
                     Mention that {sender} has specifically helped a similar company that struggled with the same problem in the past.
-                    Include in each email a bullet point of the pain points trying to be addressed, the industry, and modern solutions to address the pain point.
-                    Use this template:
-                    Pain point:
-                    Company: 
-                    Industry:
-                    Modern Solution:
-                    Cold Email:""",
+                    """,
             allow_delegation=False,
             verbose=True,
             llm=self.llm,  # Use the selected LLM here
             #step_callback=streamlit_callback
         )
 
-    def cold_email_reviewer_agent(self):
-        return Agent(
-            role='Cold Email Reviewer',
-            goal="""Review the generated cold emails to ensure they follow the format: 'Title: Painpoint: Job title: email:' for a total of five emails.""",
-            backstory="""You are sales and marketing expert and your niche area of expertise is cold sales emails creation. You posess world class ability in identifying cold email copy that converts. You are responsible for reviewing all cold  sales emails to ensure they adhere to a specific format. This format is 'Title: Painpoint: Job title: email:'. 
-                    Your job is to ensure that the generated cold sales emails are properly formatted and meet this requirement for a total of five emails.""",
-            allow_delegation=False,
-            verbose=True,
-            llm=self.llm,  # Use the selected LLM here
-            #step_callback=streamlit_callback
-        )
+    
