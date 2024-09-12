@@ -51,7 +51,7 @@ class ColdEmailAgents:
     def __init__(self, llm_name):
         # Initialize available LLMs
         self.llm_dict = {
-            "cohere": ChatCohere(cohere_api_key="9gFxdu8N2rvpvJnTV92yMB9FxRkQsOEZiLZjCBgy"),
+            "cohere": ChatCohere(cohere_api_key="ieLPQ8jIDR7czKpyAcRYPJTdjjP27AAVwR7Gvwzs"),
             "openai": OpenAI(api_key=openai_api_key),
             "groq": ChatGroq(
                 temperature=0,
@@ -73,9 +73,9 @@ class ColdEmailAgents:
                     within {industry} and the broader industry at large. Additionally, you need to assess the services that {sender} offers which will be beneficial to companies within {industry}.
                     With this information, you aid businesses in targeting precise market segments. You collect information from {offer_pdf}, {briefDes} or {offer_link}, {industry}, {sender}.
                     Armed with these details, conduct thorough research on the current companies and subniches within {industry} and the services that {sender} offers that will be beneficial to the companies identified.""",
-            tools=[
-                SearchTools.search_internet,
-            ],
+            # tools=[
+            #     SearchTools.search_internet,
+            # ],
             allow_delegation=False,
             verbose=True,
             llm=self.llm,  # Use the selected LLM here
@@ -96,21 +96,23 @@ class ColdEmailAgents:
             #step_callback=streamlit_callback
         )
 
-    def pain_points_analyst(self):
+    def idealCustomer_profiler(self):
         return Agent(
-            role='Business Pain Points Analyst',
-            goal="""Identify pain points of Job Titles within each company provided by the Business Portfolio Analyst, 
-            ranking them by their contribution to loss of revenue.""",
-            backstory="""You are a Business Pain Points Analyst who identifies the key pain points of job titles provided by the Business Portfolio Analyst,
-                    You Rank the key pain points in order of the intensity of their impact on revenue. As part of your final submission you always submit a three column table. 
-                    The heading for the first column is named Job title, and the cells column are  all the Job titles you are identified. The heading for the second 
-                    column  is named Ranked pain points and  cells in this column are the pain points you identifed. The heading for the third column is named 
-                    Impact On Revenue, and the cells in this column has the ranking for the respective  job title and ranked pain points.
-                    You also filter the pain points and identify the solutions that were used to address them in the past. You base your ranking on reviews and sentiments from the targeted Job Titles of various companies within {industry}.""",
+            role='Customer Insight Analyst',
+            goal="""Identify and provide an ideal customer profile  of the job titles and companies identified by the business portfolio analyst. 
+                    The ICP should include detailed insights that help in targeting and understanding the best potential customers for the {briefDes} service
+                    being offered by the user. This should include detailed insights that help in targeting and understanding
+                    the best potential customers for a product or service within the industry.""",
+
+            backstory="""You are a renowned customer insight analyst firm Nielsen with extensive knowledge
+                         in audience insights, data and analytics,and shapes the future of businesses with accurate measurement of what people listen, buy or
+                         show interest within. You also understand and provide that an ideal customer profile is a detailed description of the
+                         type of customer and their companies provided by the business portfolio analyst, and the ones that are most likely to benefit from
+                         and be interested in the {briefDes} provided by the user. Your role is to make the process of
+                         identifying and targeting these profiles more efficient by focusting on industry-specific characteristics.""",
             allow_delegation=False,
             verbose=True,
-            llm=self.llm,  # Use the selected LLM here
-            #step_callback=streamlit_callback,
+            llm=self.llm, 
         )
 
     def cold_email_generator(self):

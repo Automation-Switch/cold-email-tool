@@ -36,7 +36,7 @@ class ColdEmailCrew:
         # Initialize agents
         business_analyst_agent = agents.business_analyst_agent()
         business_portfolio_analyst_agent = agents.business_portfolio_analyst()
-        pain_points_analyst_agent = agents.pain_points_analyst()
+        idealCustomer_profiler = agents.idealCustomer_profiler()
         cold_email_generator_agent = agents.cold_email_generator()
         cold_email_reviewer_agent = agents.cold_email_reviewer_agent()
 
@@ -59,8 +59,8 @@ class ColdEmailCrew:
             offer_link=self.offer_link
         )
 
-        painPoints = tasks.painPoints(
-            agent=pain_points_analyst_agent,
+        idealCustomerProfile = tasks.idealCustomerProfile(
+            agent=idealCustomer_profiler,
             industry=self.industry,
             sender=self.sender,
             briefDes=self.briefDes,
@@ -91,11 +91,11 @@ class ColdEmailCrew:
             agents=[
                 business_analyst_agent,
                 business_portfolio_analyst_agent,
-                pain_points_analyst_agent,
+                idealCustomer_profiler,
                 cold_email_generator_agent,
                 cold_email_reviewer_agent
             ],
-            tasks=[subniche, profile, painPoints, coldEmailWriter, coldEmailReviewer],
+            tasks=[subniche, profile, idealCustomerProfile, coldEmailWriter, coldEmailReviewer],
             verbose=True
         )
 
