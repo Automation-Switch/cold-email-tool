@@ -17,3 +17,5 @@ cohere
 borb
 fpdf
 python-dotenv
+pdfplumber
+supabase

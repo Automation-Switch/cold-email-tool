@@ -10,3 +10,11 @@ gatherUsageStats = false
 
 [deploy]
 deploymentMode = "custom"
+
+[theme]
+base = "dark"
+backgroundColor = "#0a0a0a"
+secondaryBackgroundColor = "#111111"
+primaryColor = "#C8FF00"
+textColor = "#f0f0f0"
+font = "sans serif"
