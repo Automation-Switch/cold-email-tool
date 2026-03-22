@@ -1,0 +1,12 @@
+[server]
+headless = true
+address = "localhost"
+port = 8501
+
+[browser]
+serverAddress = "localhost"
+serverPort = 8501
+gatherUsageStats = false
+
+[deploy]
+deploymentMode = "custom"

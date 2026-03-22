@@ -3,6 +3,7 @@ from crewai import Agent
 from langchain_community.chat_models import ChatCohere
 from langchain_openai import OpenAI
 from langchain_groq import ChatGroq
+from langchain_anthropic import ChatAnthropic
 from tools.search_tools import SearchTools
 from dotenv import load_dotenv
 import streamlit as st
@@ -10,8 +11,9 @@ import streamlit as st
 # Load environment variables
 load_dotenv()
 openai_api_key = os.environ.get("OPENAI_API_KEY")
-cohere_api_key = os.environ.get("COHERE_API_KEY")  
+cohere_api_key = os.environ.get("COHERE_API_KEY")
 groq_api_key = os.environ.get("GROQ_API_KEY")
+anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
 
 # Cold Email Agents Class
 
@@ -48,22 +50,35 @@ def streamlit_callback(step_output):
             st.markdown(step)
 
 class ColdEmailAgents:
-    def __init__(self, llm_name):
-        # Initialize available LLMs
+    def __init__(self, llm_name, byok_key: str = None):
+        """
+        llm_name: one of claude, openai, groq, cohere
+        byok_key: optional user-supplied API key (BYOK tier)
+        """
+        # Resolve keys — BYOK overrides platform key for the selected model
+        resolved_anthropic = byok_key if (byok_key and llm_name == "claude") else anthropic_api_key
+        resolved_openai    = byok_key if (byok_key and llm_name == "openai") else openai_api_key
+        resolved_groq      = byok_key if (byok_key and llm_name == "groq")   else groq_api_key
+
         self.llm_dict = {
-            "cohere": ChatCohere(cohere_api_key="ieLPQ8jIDR7czKpyAcRYPJTdjjP27AAVwR7Gvwzs"),
-            "openai": OpenAI(api_key=openai_api_key),
+            "claude": ChatAnthropic(
+                model="claude-haiku-4-5-20251001",
+                anthropic_api_key=resolved_anthropic,
+                temperature=0,
+            ),
+            "openai": OpenAI(api_key=resolved_openai),
             "groq": ChatGroq(
                 temperature=0,
-                groq_api_key=groq_api_key,
+                groq_api_key=resolved_groq,
                 model_name="mixtral-8x7b-32768"
-            )
+            ),
+            "cohere": ChatCohere(cohere_api_key=cohere_api_key),
         }
-        # Set the selected LLM
+
         if llm_name in self.llm_dict:
             self.llm = self.llm_dict[llm_name]
         else:
-            raise ValueError(f"LLM '{llm_name}' not recognized. Choose from {', '.join(self.llm_dict.keys())}.")
+            raise ValueError(f"LLM '{llm_name}' not recognised. Choose from {', '.join(self.llm_dict.keys())}.")
 
     def business_analyst_agent(self):
         return Agent(

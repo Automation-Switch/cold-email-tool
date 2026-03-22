@@ -1,1 +1,11 @@
-venv
+venv/
+.venv-fresh/
+__pycache__/
+*.pyc
+.env
+users.db
+Cold Emails.md
+Companies.md
+Job Titles.md
+Pain Points.md
+IMPLEMENTATION_PLAN.md

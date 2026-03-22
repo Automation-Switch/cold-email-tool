@@ -8,9 +8,12 @@ streamlit-shadcn-ui
 firebase-admin
 langchain
 langchain_groq
+langchain_anthropic
+anthropic
 streamlit-extras
 streamlit-cookies-manager
 streamlit-custom-notification-box
 cohere
 borb
 fpdf
+python-dotenv

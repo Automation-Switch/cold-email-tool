@@ -1,262 +1,382 @@
 import io
 import os
 import streamlit as st
+import streamlit.components.v1 as components
 from crewai import Crew
 from cold_EmailAgents import ColdEmailAgents
 from cold_EmailTasks import coldEmailTasks
-from borb.pdf import Document, Page, SingleColumnLayout, SingleColumnLayoutWithOverflow, Paragraph, PDF
-from borb.pdf.canvas.layout.page_layout.multi_column_layout import MultiColumnLayout
+from borb.pdf import Document, Page, SingleColumnLayout, Paragraph, PDF
 from streamlit_extras.switch_page_button import switch_page
+from supabase_client import get_supabase
 
-# Configure Streamlit page
-st.set_page_config(page_icon="assets/scaletific_icon.png", layout="wide")
+FREE_RUN_LIMIT = 3
 
-def icon(emoji: str):
-    """Display an emoji icon in the Streamlit app."""
-    st.write(
-        f'<span style="font-size: 38px; line-height: 1">{emoji}</span>',
-        unsafe_allow_html=True,
-    )
+st.set_page_config(page_icon="assets/scaletific_icon.png", layout="wide", page_title="PrecisionReach")
+
+# ── Hide Streamlit branding ──
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden;}
+    [data-testid="stDecoration"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
+
+
+# ─────────────────────────────────────────
+# Supabase helpers
+# ─────────────────────────────────────────
+
+def get_run_count(user_id: str) -> int:
+    try:
+        sb = get_supabase()
+        result = sb.table("user_profiles").select("run_count, is_paid").eq("id", user_id).single().execute()
+        if result.data:
+            return result.data.get("run_count", 0), result.data.get("is_paid", False)
+    except Exception:
+        pass
+    return 0, False
+
+
+def increment_run_count(user_id: str):
+    try:
+        sb = get_supabase()
+        current, _ = get_run_count(user_id)
+        sb.table("user_profiles").upsert({"id": user_id, "run_count": current + 1}).execute()
+    except Exception as e:
+        st.warning(f"Could not update run count: {e}")
+
+
+def save_run_to_supabase(user_id: str, industry: str, sender: str, briefDes: str,
+                          offer_link: str, llm_name: str, results: dict):
+    try:
+        sb = get_supabase()
+        sb.table("runs").insert({
+            "user_id":    user_id,
+            "industry":   industry,
+            "sender":     sender,
+            "brief_des":  briefDes,
+            "offer_link": offer_link,
+            "llm_name":   llm_name,
+            "job_titles": results.get("Job Titles", ""),
+            "pain_points": results.get("Pain Points", ""),
+            "cold_emails": results.get("Cold Emails", ""),
+        }).execute()
+    except Exception as e:
+        st.warning(f"Could not save run: {e}")
+
+
+# ─────────────────────────────────────────
+# Crew runner
+# ─────────────────────────────────────────
+
+# Stage definitions — order matches task execution order
+STAGES = [
+    {"step": 1, "icon": "🔍", "label": "Researching your industry and target companies..."},
+    {"step": 2, "icon": "👥", "label": "Profiling job titles and decision-makers..."},
+    {"step": 3, "icon": "💡", "label": "Building ideal customer profiles..."},
+    {"step": 4, "icon": "✉️",  "label": "Drafting your cold emails..."},
+]
+
+
+def render_stages(completed: int, status_box):
+    """Render the stage progress tracker inside a Streamlit placeholder."""
+    lines = []
+    for s in STAGES:
+        if s["step"] < completed:
+            lines.append(f"✅ ~~{s['label']}~~")
+        elif s["step"] == completed:
+            lines.append(f"{s['icon']} **{s['label']}**")
+        else:
+            lines.append(f"⬜ {s['label']}")
+    status_box.markdown("\n\n".join(lines))
+
 
 class ColdEmailCrew:
-    def __init__(self, industry, sender, briefDes, offer_pdf, offer_link, llm_name):
-        self.industry = industry
-        self.sender = sender
-        self.briefDes = briefDes
-        self.offer_pdf = offer_pdf
-        self.offer_link = offer_link
-        self.llm_name = llm_name
-        self.output_placeholder = st.empty()
+    def __init__(self, industry, sender, briefDes, offer_pdf, offer_link,
+                 llm_name, byok_key=None, status_box=None, progress_bar=None):
+        self.industry     = industry
+        self.sender       = sender
+        self.briefDes     = briefDes
+        self.offer_pdf    = offer_pdf
+        self.offer_link   = offer_link
+        self.llm_name     = llm_name
+        self.byok_key     = byok_key
+        self.status_box   = status_box
+        self.progress_bar = progress_bar
+        self._stage       = [1]  # mutable so callback can update it
+
+    def _on_task_complete(self, output):
+        """Called by CrewAI after each task finishes."""
+        completed = self._stage[0]
+        if self.progress_bar:
+            self.progress_bar.progress(completed / len(STAGES))
+        if self.status_box:
+            render_stages(completed + 1, self.status_box)
+        self._stage[0] += 1
 
     def run(self):
-        """Execute the tasks and return the contents of the generated files."""
-        agents = ColdEmailAgents(llm_name=self.llm_name)
-        tasks = coldEmailTasks()
+        if self.status_box:
+            render_stages(1, self.status_box)
+        if self.progress_bar:
+            self.progress_bar.progress(0)
 
-        # Initialize agents
-        business_analyst_agent = agents.business_analyst_agent()
+        agents = ColdEmailAgents(llm_name=self.llm_name, byok_key=self.byok_key)
+        tasks  = coldEmailTasks()
+
+        business_analyst_agent           = agents.business_analyst_agent()
         business_portfolio_analyst_agent = agents.business_portfolio_analyst()
-        idealCustomer_profiler = agents.idealCustomer_profiler()
-        cold_email_generator_agent = agents.cold_email_generator()
+        idealCustomer_profiler           = agents.idealCustomer_profiler()
+        cold_email_generator_agent       = agents.cold_email_generator()
 
-        # Create tasks with correct argument ordering
         subniche = tasks.subniche(
             agent=business_analyst_agent,
-            industry=self.industry,
-            sender=self.sender,
-            briefDes=self.briefDes,
-            offer_pdf=self.offer_pdf,
-            offer_link=self.offer_link
+            industry=self.industry, sender=self.sender,
+            briefDes=self.briefDes, offer_pdf=self.offer_pdf, offer_link=self.offer_link
         )
-
         profile = tasks.profile(
             agent=business_portfolio_analyst_agent,
-            industry=self.industry,
-            sender=self.sender,
-            briefDes=self.briefDes,
-            offer_pdf=self.offer_pdf,
-            offer_link=self.offer_link
+            industry=self.industry, sender=self.sender,
+            briefDes=self.briefDes, offer_pdf=self.offer_pdf, offer_link=self.offer_link
         )
-
         idealCustomerProfile = tasks.idealCustomerProfile(
             agent=idealCustomer_profiler,
-            industry=self.industry,
-            sender=self.sender,
-            briefDes=self.briefDes,
-            offer_pdf=self.offer_pdf,
-            offer_link=self.offer_link
+            industry=self.industry, sender=self.sender,
+            briefDes=self.briefDes, offer_pdf=self.offer_pdf, offer_link=self.offer_link
         )
-
         coldEmailWriter = tasks.coldEmailWriter(
             agent=cold_email_generator_agent,
-            industry=self.industry,
-            sender=self.sender,
-            briefDes=self.briefDes,
-            offer_pdf=self.offer_pdf,
-            offer_link=self.offer_link
+            industry=self.industry, sender=self.sender,
+            briefDes=self.briefDes, offer_pdf=self.offer_pdf, offer_link=self.offer_link
         )
 
-
-        # Initialize and execute the Crew
         crew = Crew(
-            agents=[
-                business_analyst_agent,
-                business_portfolio_analyst_agent,
-                idealCustomer_profiler,
-                cold_email_generator_agent
-            ],
+            agents=[business_analyst_agent, business_portfolio_analyst_agent,
+                    idealCustomer_profiler, cold_email_generator_agent],
             tasks=[subniche, profile, idealCustomerProfile, coldEmailWriter],
+            task_callback=self._on_task_complete,
             verbose=True
         )
-
         crew.kickoff()
 
-        # Read and return the contents of the generated files
-        results = {
-            "Job Titles": self._read_file(tasks.profile_output_file),
+        if self.progress_bar:
+            self.progress_bar.progress(1.0)
+        if self.status_box:
+            self.status_box.markdown("✅ **All agents complete. Your campaign is ready.**")
+
+        return {
+            "Job Titles":  self._read_file(tasks.profile_output_file),
             "Pain Points": self._read_file(tasks.painPoints_output_file),
             "Cold Emails": self._read_file(tasks.coldEmailReviewer_output_file),
         }
 
-        return results
-
     def _read_file(self, file_path):
-        """Read the contents of a file if it exists."""
         if os.path.exists(file_path):
-            with open(file_path, 'r') as file:
-                return file.read()
-        else:
-            return f"**Error:** The file `{file_path}` was not found."
+            with open(file_path, 'r') as f:
+                return f.read()
+        return f"**Error:** File `{file_path}` not found."
 
-def create_pdf_from_files(file_contents):
-    """Generate a well-formatted PDF from multiple files using borb."""
-    pdf = Document()
-    page = Page()
-    layout = SingleColumnLayoutWithOverflow(page)
-    pdf.add_page(page)
 
-    for title, content in file_contents.items():
-        layout.add(Paragraph(f"{title}\n\n", font_size=12))
+# ─────────────────────────────────────────
+# PDF generation
+# ─────────────────────────────────────────
+
+def create_pdf(results: dict) -> io.BytesIO:
+    pdf    = Document()
+    page   = Page()
+    pdf.append_page(page)
+    layout = SingleColumnLayout(page)
+
+    for title, content in results.items():
+        layout.add(Paragraph(title, font_size=14))
         layout.add(Paragraph(content, font="Helvetica", font_size=8))
 
-    pdf_output = io.BytesIO()
-    PDF.dumps(pdf_output, pdf)
-    pdf_output.seek(0)
+    buf = io.BytesIO()
+    PDF.write(buf, pdf)
+    buf.seek(0)
+    return buf
 
-    return pdf_output
 
-def run_email_generation(industry, sender, briefDes, offer_pdf, offer_link, llm_name):
-    """Instantiate and run the ColdEmailCrew, then return the results."""
-    email_crew = ColdEmailCrew(industry, sender, briefDes, offer_pdf, offer_link, llm_name)
-    results = email_crew.run()
-    return results
+# ─────────────────────────────────────────
+# Copy to clipboard component
+# ─────────────────────────────────────────
 
-def set_query_params_via_js(page):
-    """Set query parameters via JavaScript for redirection purposes."""
-    js_code = f"""
-    <script>
-    function setQueryParams() {{
-        const url = new URL(window.location);
-        url.searchParams.set('page', '{page}');
-        window.history.pushState('', '', url);
-    }}
-    setQueryParams();
-    </script>
-    """
-    st.components.v1.html(js_code, height=0)
+def copy_button(text: str, key: str):
+    safe = text.replace("`", "\\`").replace("$", "\\$")
+    components.html(f"""
+        <button onclick="navigator.clipboard.writeText(`{safe}`).then(() => {{
+            this.innerText = '✓ Copied!';
+            setTimeout(() => this.innerText = 'Copy to Clipboard', 2000);
+        }})" style="
+            background:#1a1a1a; color:#C8FF00; border:1px solid #333;
+            padding:6px 14px; border-radius:6px; cursor:pointer;
+            font-size:13px; font-family:monospace; margin-bottom:8px;
+        ">Copy to Clipboard</button>
+    """, height=48)
+
+
+# ─────────────────────────────────────────
+# Main app
+# ─────────────────────────────────────────
 
 def main():
-    """Main function to run the Streamlit app."""
-    # Authentication check
-    if "logged_in" not in st.session_state or not st.session_state.logged_in:
-        st.warning("You need to be logged in to access this page.")
-        login_redirect = st.button("Login")
-        if login_redirect:
-            switch_page('Home')
-        set_query_params_via_js("home")  # Redirect to home if not logged in
+    # ── Auth guard ──
+    if not st.session_state.get("logged_in") or not st.session_state.get("user"):
+        st.warning("Please log in to access PrecisionReach.")
+        if st.button("Go to Login"):
+            switch_page("Home")
         st.stop()
 
-    # Initialize session state variables
-    if "show_sidebar" not in st.session_state:
-        st.session_state.show_sidebar = True
-    if "results" not in st.session_state:
-        st.session_state.results = {}
-    if "generate" not in st.session_state:
-        st.session_state.generate = False
-    if "pdf_data" not in st.session_state:
-        st.session_state.pdf_data = None
+    user    = st.session_state["user"]
+    user_id = user.id
 
-    def toggle_sidebar():
-        """Toggle the visibility of the sidebar."""
+    # ── Freemium gate ──
+    run_count, is_paid = get_run_count(user_id)
+    runs_remaining = max(0, FREE_RUN_LIMIT - run_count)
+
+    # ── Session state init ──
+    for key, default in [("show_sidebar", True), ("results", {}),
+                          ("generate", False), ("pdf_data", None)]:
+        if key not in st.session_state:
+            st.session_state[key] = default
+
+    # ── Header ──
+    col1, col2 = st.columns([6, 1])
+    with col1:
+        st.markdown("## ✉️ PrecisionReach")
+        st.markdown("##### Let AI agents research and write your cold emails.")
+    with col2:
+        if not is_paid:
+            st.metric("Free runs left", runs_remaining)
+
+    st.divider()
+
+    # ── Sidebar toggle ──
+    if st.button("☰ Menu"):
         st.session_state.show_sidebar = not st.session_state.show_sidebar
 
-    # Sidebar toggle button
-    st.button("Main Menu", on_click=toggle_sidebar)
-
-    # Display header and apply custom styles
-    icon(":postbox: Cold Email Generator")
-    st.subheader("Let AI agents help you land your first client!", anchor=False, divider="rainbow")
-    try:
-        with open('style.css') as f:
-            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.warning("Custom CSS file `style.css` not found. Continuing without custom styles.")
-
-    # Sidebar form for user input
+    # ── Sidebar form ──
     if st.session_state.show_sidebar:
         with st.sidebar:
-            st.header("Fill out the following:")
-            with st.form("my_form"):
-                # Industry selection
-                dropdown_Options = ["Service Providers", "Manufacturing", "Agricultural", "Other"]
-                industry = st.selectbox(
-                    "Which industry perfectly describes the companies you are sending the cold email to?",
-                    dropdown_Options
-                )
-                industry_other = st.text_input("If 'Other' please specify", help="Optional")
+            st.header("Campaign Details")
+            with st.form("campaign_form"):
+                industry_options = ["Real Estate", "Service Providers", "Manufacturing",
+                                    "Technology", "Healthcare", "Financial Services",
+                                    "Retail", "Agricultural", "Other"]
+                industry      = st.selectbox("Target Industry", industry_options)
+                industry_other = st.text_input("If 'Other', specify industry")
+                sender        = st.text_input("Your Company Name", placeholder="Automation Switch")
+                briefDes      = st.text_area("Describe your services", placeholder="We help sales teams automate outreach using AI...")
+                offer_pdf     = st.file_uploader("Upload services PDF (optional)", type="pdf")
+                offer_link    = st.text_input("Your website URL (optional)")
+                llm_options   = ["claude (managed)", "openai (managed)", "groq (free)", "bring your own key"]
+                llm_choice    = st.selectbox("AI Model", llm_options)
 
-                # Company and offer details
-                sender = st.text_input("What is the name of your Company?", placeholder="Scaletific")
-                briefDes = st.text_area("Provide a brief description about the services you offer")
-                offer_pdf = st.file_uploader(
-                    "Upload a PDF file of the services you offer",
-                    type="pdf",
-                    key="pdf_uploader",
-                    help="Optional: Upload a PDF file for your services"
-                )
-                offer_link = st.text_input("Provide a link to your website", help="Optional: Provide a link to your services")
+                byok_key = None
+                if llm_choice == "bring your own key":
+                    st.markdown("**BYOK — Bring Your Own Key**")
+                    byok_provider = st.selectbox("Your provider", ["claude", "openai", "groq"])
+                    byok_key      = st.text_input("Paste your API key", type="password",
+                                                  help="Your key is used only for this session and never stored.")
+                    llm_name = byok_provider
+                else:
+                    llm_name = llm_choice.split(" ")[0]  # strip "(managed)" / "(free)"
 
-                # Language model selection
-                llm_options = ["cohere", "openai", "groq"]
-                llm_name = st.selectbox("Select an LLM", llm_options)
-
-                # Submit button
-                submitted = st.form_submit_button("Generate Cold Email")
+                submitted = st.form_submit_button("Generate Cold Emails", use_container_width=True)
 
                 if submitted:
-                    # Save inputs to session state
-                    st.session_state.industry = industry if industry != "Other" else industry_other
-                    st.session_state.sender = sender
-                    st.session_state.briefDes = briefDes
-                    st.session_state.offer_pdf = offer_pdf
-                    st.session_state.offer_link = offer_link
-                    st.session_state.llm_name = llm_name
-                    st.session_state.generate = True
-                    st.session_state.results = {}  # Reset results
-                    st.session_state.pdf_data = None  # Reset PDF data
+                    if llm_choice == "bring your own key" and not byok_key:
+                        st.error("Please paste your API key to use BYOK.")
+                    elif not is_paid and run_count >= FREE_RUN_LIMIT and llm_choice != "bring your own key":
+                        st.error(f"You've used all {FREE_RUN_LIMIT} free runs. Use BYOK or upgrade.")
+                    else:
+                        st.session_state.industry   = industry if industry != "Other" else industry_other
+                        st.session_state.sender     = sender
+                        st.session_state.briefDes   = briefDes
+                        st.session_state.offer_pdf  = offer_pdf
+                        st.session_state.offer_link = offer_link
+                        st.session_state.llm_name   = llm_name
+                        st.session_state.byok_key   = byok_key
+                        st.session_state.generate   = True
+                        st.session_state.results    = {}
+                        st.session_state.pdf_data   = None
 
+    # ── Generation ──
     if st.session_state.generate:
-        with st.spinner("Agents at work..."):
-            # Run email generation and display results if not already generated
-            if not st.session_state.results:
-                results = run_email_generation(
+        if not st.session_state.results:
+
+            # Final freemium check — BYOK users bypass the run limit
+            is_byok = bool(st.session_state.get("byok_key"))
+            if not is_paid and not is_byok and run_count >= FREE_RUN_LIMIT:
+                st.warning(f"You've used all {FREE_RUN_LIMIT} free runs.")
+                st.info("Want unlimited access? Email us at **hello@automationswitch.com** to upgrade.")
+                st.session_state.generate = False
+                st.stop()
+
+            st.markdown("#### 🤖 Agents at work — this takes 3–5 minutes")
+            progress_bar = st.progress(0)
+            status_box   = st.empty()
+
+            crew = ColdEmailCrew(
                     st.session_state.industry,
                     st.session_state.sender,
                     st.session_state.briefDes,
                     st.session_state.offer_pdf,
                     st.session_state.offer_link,
-                    st.session_state.llm_name
-                )
-                st.session_state.results = results
-
-        # Display results in a collapsible format
-        for key, content in st.session_state.results.items():
-            with st.expander(key):
-                st.write(content)
-
-        # Generate PDF from results if not already done
-        if st.button("Generate PDF"):
-            pdf_data = create_pdf_from_files(st.session_state.results)
-            st.session_state.pdf_data = pdf_data
-
-        # Display download button if PDF is generated
-        if st.session_state.pdf_data:
-            st.download_button(
-                label="Download PDF",
-                data=st.session_state.pdf_data,
-                file_name="cold_emails.pdf",
-                mime="application/pdf"
+                    st.session_state.llm_name,
+                    byok_key=st.session_state.get("byok_key"),
+                    status_box=status_box,
+                    progress_bar=progress_bar,
             )
+            results = crew.run()
+            st.session_state.results = results
+
+            # Save to Supabase + increment counter
+            save_run_to_supabase(
+                user_id=user_id,
+                industry=st.session_state.industry,
+                sender=st.session_state.sender,
+                briefDes=st.session_state.briefDes,
+                offer_link=st.session_state.offer_link or "",
+                llm_name=st.session_state.llm_name,
+                results=results
+            )
+            increment_run_count(user_id)
+            st.success("✅ Done! Your cold email campaign is ready.")
+
+        # ── Display results ──
+        for section, content in st.session_state.results.items():
+            with st.expander(f"📄 {section}", expanded=True):
+                copy_button(content, key=section)
+                st.markdown(content)
+
+        st.divider()
+
+        # ── PDF export ──
+        col_a, col_b = st.columns([1, 4])
+        with col_a:
+            if st.button("📥 Generate PDF"):
+                st.session_state.pdf_data = create_pdf(st.session_state.results)
+
+        if st.session_state.pdf_data:
+            with col_b:
+                st.download_button(
+                    label="⬇️ Download PDF",
+                    data=st.session_state.pdf_data,
+                    file_name=f"precision_reach_{st.session_state.industry.lower().replace(' ', '_')}.pdf",
+                    mime="application/pdf"
+                )
+
+        # ── Freemium nudge ──
+        if not is_paid:
+            new_count = run_count + 1
+            if new_count >= FREE_RUN_LIMIT:
+                st.warning(f"⚠️ This was your last free run. Email **hello@automationswitch.com** to unlock unlimited access.")
+            else:
+                st.info(f"💡 You have {FREE_RUN_LIMIT - new_count} free run(s) remaining.")
+
 
 if __name__ == "__main__":
     main()

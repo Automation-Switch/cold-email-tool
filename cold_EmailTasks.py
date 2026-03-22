@@ -76,7 +76,9 @@ class coldEmailTasks:
                        TheEmail should have a subject line. The  subject line still needs to make sense with the overall message. Keep the subject lines under 2-3 words and think of something that a colleague or customer would send the prospect.
                        We want to send something that sparks intrigue to open the email, not give away the entire message.
                        You emails should should be written from the perspective of a combination of skillset drawn from marketing expert Russel Brunson and Direct marketing expert and strategist Dan Kennedy.
-                        Write at a 5th grade level. Clearly communicate the reason you are reaching out. Stay away from spam words
+                        Write at a 5th grade level. Clearly communicate the reason you are reaching out. Stay away from spam words.
+                       Never use double negatives or negative constructions (e.g. "not because they're not" — avoid this entirely).
+                       Write the email body in plain prose only. No bullet points, no numbered lists, no dashes, no enumerations of any kind inside the email body.
               {self.__tip_section()}
             """),
             expected_output="""The final must be 5 well-formatted Cold emails for the various Job Titles and their companies provided by Business Portfolio Analyst. 
